@@ -290,39 +290,23 @@
       <div class="panel">
         <h2 style="margin-bottom: 25px; color: #333;">Your Hardware</h2>
 
-        <!-- GPU Selection Mode -->
+        <!-- GPU Model Selection -->
         <div class="form-group">
-          <label style="font-weight: 700; margin-bottom: 12px;">Do you have a GPU?</label>
-          <div style="display: flex; gap: 10px;">
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
-              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()"> Yes
-            </label>
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
-              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()"> No (CPU only)
-            </label>
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
-              <input type="radio" name="gpuMode" value="custom" onchange="updateGpuMode()"> Custom VRAM
-            </label>
-          </div>
-        </div>
-
-        <!-- GPU Model Selection (shown when GPU=yes) -->
-        <div id="gpuModelSection" class="form-group">
-          <label for="gpuModel">Select Your GPU</label>
-          <select id="gpuModel" onchange="updateVramFromGpu()">
-            <option value="">-- Choose GPU --</option>
+          <label for="gpuModel">GPU / Hardware</label>
+          <select id="gpuModel" onchange="updateGpuMode()">
+            <option value="">-- Select GPU or Option Below --</option>
           </select>
-          <small style="color: #999; margin-top: 5px; display: block;">Can't find yours? Switch to "Custom VRAM" above</small>
+          <small style="color: #999; margin-top: 5px; display: block;">Don't see yours? Use "Custom VRAM" option</small>
         </div>
 
         <!-- Custom VRAM Input (shown when GPU=custom) -->
         <div id="customVramSection" class="form-group" style="display: none;">
-          <label for="customVram">VRAM in GB</label>
-          <input type="number" id="customVram" placeholder="e.g., 24" min="0" step="0.5">
-          <small style="color: #999; margin-top: 5px; display: block;">Enter your GPU's VRAM, or 0 for CPU-only inference</small>
+          <label for="customVram">Custom VRAM (GB)</label>
+          <input type="number" id="customVram" placeholder="e.g., 24" min="0" step="0.5" onchange="updateGpuMode()">
+          <small style="color: #999; margin-top: 5px; display: block;">Enter 0 for CPU-only inference</small>
         </div>
 
-        <!-- CPU-only message (shown when GPU=no) -->
+        <!-- CPU-only message (shown when custom VRAM=0) -->
         <div id="cpuOnlyMessage" style="display: none; background: #e7f3ff; color: #004085; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9em;">
           ⚠️ <strong>CPU-only inference:</strong> Models will run on system RAM only. Expect 5-20 tokens/sec depending on CPU cores.
         </div>
@@ -395,6 +379,7 @@
       const gpuSelect = document.getElementById('gpuModel');
       const groups = groupGpusByManufacturer();
 
+      // Add manufacturer groups
       Object.entries(groups).forEach(([manufacturer, models]) => {
         if (models.length === 0) return;
 
@@ -410,47 +395,59 @@
 
         gpuSelect.appendChild(optgroup);
       });
+
+      // Add special options at the end
+      const separator = document.createElement('optgroup');
+      separator.label = '─────';
+      separator.disabled = true;
+      gpuSelect.appendChild(separator);
+
+      const customOption = document.createElement('option');
+      customOption.value = 'CUSTOM';
+      customOption.textContent = 'Custom VRAM (enter value below)';
+      gpuSelect.appendChild(customOption);
+
+      const cpuOption = document.createElement('option');
+      cpuOption.value = 'CPU';
+      cpuOption.textContent = 'CPU-only (no GPU)';
+      gpuSelect.appendChild(cpuOption);
     }
 
     // Update GPU mode UI
     window.updateGpuMode = function() {
-      const mode = document.querySelector('input[name="gpuMode"]:checked').value;
-      const gpuModelSection = document.getElementById('gpuModelSection');
+      const gpuModel = document.getElementById('gpuModel').value;
       const customVramSection = document.getElementById('customVramSection');
       const cpuOnlyMessage = document.getElementById('cpuOnlyMessage');
+      const customVramInput = document.getElementById('customVram');
 
-      gpuModelSection.style.display = mode === 'yes' ? 'block' : 'none';
-      customVramSection.style.display = mode === 'custom' ? 'block' : 'none';
-      cpuOnlyMessage.style.display = mode === 'no' ? 'block' : 'none';
-    }
-
-    // Update VRAM display when GPU is selected
-    window.updateVramFromGpu = function() {
-      const gpuModel = document.getElementById('gpuModel').value;
-      const specs = gpuModel ? getGpuSpecs(gpuModel) : null;
-      if (specs) {
-        // Show which VRAM was auto-selected (visual feedback)
-        const gpuSelect = document.getElementById('gpuModel');
-        gpuSelect.title = `${specs.vram}GB VRAM, ${specs.backend} backend`;
+      if (gpuModel === 'CUSTOM') {
+        customVramSection.style.display = 'block';
+        cpuOnlyMessage.style.display = 'none';
+      } else if (gpuModel === 'CPU') {
+        customVramSection.style.display = 'block';
+        customVramInput.value = '0';
+        cpuOnlyMessage.style.display = 'block';
+      } else {
+        customVramSection.style.display = 'none';
+        cpuOnlyMessage.style.display = 'none';
       }
     }
 
     // Score models
     window.scoreModels = async function() {
       const resultsContainer = document.getElementById('resultsContainer');
-      const gpuMode = document.querySelector('input[name="gpuMode"]:checked').value;
       const gpuModel = document.getElementById('gpuModel').value;
       const customVram = parseFloat(document.getElementById('customVram').value);
       const systemRam = parseInt(document.getElementById('systemRam').value);
       const useCase = document.getElementById('useCase').value;
 
       // Validate input
-      if (gpuMode === 'yes' && !gpuModel) {
-        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU model</div>';
+      if (!gpuModel) {
+        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU or option</div>';
         return;
       }
 
-      if (gpuMode === 'custom' && isNaN(customVram)) {
+      if ((gpuModel === 'CUSTOM' || gpuModel === 'CPU') && isNaN(customVram)) {
         resultsContainer.innerHTML = '<div class="error">⚠️ Please enter a VRAM value</div>';
         return;
       }
@@ -468,7 +465,8 @@
         unified: false,
       };
 
-      if (gpuMode === 'yes' && gpuModel) {
+      // Regular GPU from dropdown
+      if (gpuModel !== 'CUSTOM' && gpuModel !== 'CPU') {
         const specs = getGpuSpecs(gpuModel);
         if (specs) {
           hardware.hasGpu = true;
@@ -476,11 +474,14 @@
           hardware.backend = specs.backend;
           hardware.unified = specs.unified || false;
         }
-      } else if (gpuMode === 'custom') {
-        if (customVram > 0) {
-          hardware.hasGpu = true;
-          hardware.vram = customVram;
-        }
+      } else if (gpuModel === 'CUSTOM' && customVram > 0) {
+        // Custom VRAM with GPU
+        hardware.hasGpu = true;
+        hardware.vram = customVram;
+      } else if (gpuModel === 'CPU' || customVram === 0) {
+        // CPU-only
+        hardware.hasGpu = false;
+        hardware.vram = 0;
       }
 
       // Get all models
@@ -517,6 +518,13 @@
             <small style="color: #999; font-size: 0.85em;">For: ${hardwareSummary} • ${systemRam}GB RAM • ${useCase}</small>
           </div>
           <span class="results-count">${runnable.length} of ${results.length}</span>
+        </div>
+
+        <div class="info-box" style="margin-bottom: 20px;">
+          <strong>📊 Understanding the Scores:</strong><br>
+          <strong>Score (top-right):</strong> Overall fit for YOUR hardware (0-100). Higher = better for your specific setup.<br>
+          <strong>Quality:</strong> Model capability (parameter count, reputation, etc). Not all high-quality models need high specs.<br>
+          <strong>Fit Level:</strong> Does it physically fit in your VRAM? Perfect/Good/Marginal/Too Tight.
         </div>
       `;
 
