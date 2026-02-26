@@ -582,31 +582,25 @@
 
     // Get visual quantization bar
     function getQuantizationBar(quant) {
-      // Map quantization to quality level (0-5 filled blocks)
+      // Map quantization to quality level
       const quantMap = {
-        'F32': 5, 'F16': 5, 'BF16': 5,
-        'Q8_0': 5, 'Q8_1': 4.5,
-        'Q7_K_M': 4.5, 'Q7_K_S': 4.5,
-        'Q6_K': 4,
-        'Q5_K_M': 3.5, 'Q5_K_S': 3.5, 'Q5_M': 3.5, 'Q5_0': 3.5,
-        'Q4_K_M': 3, 'Q4_K_S': 3, 'Q4_1': 3, 'Q4_0': 3,
-        'Q3_K_M': 2, 'Q3_K_S': 2, 'Q3_K_L': 2,
-        'Q2_K': 1,
-        'Q8': 5, 'Q6': 4, 'Q4': 3, 'Q2': 1
+        'F32': 'high', 'F16': 'high', 'BF16': 'high',
+        'Q8_0': 'high', 'Q8_1': 'high',
+        'Q7_K_M': 'high', 'Q7_K_S': 'high',
+        'Q6_K': 'high',
+        'Q5_K_M': 'balanced', 'Q5_K_S': 'balanced', 'Q5_M': 'balanced', 'Q5_0': 'balanced',
+        'Q4_K_M': 'balanced', 'Q4_K_S': 'balanced', 'Q4_1': 'balanced', 'Q4_0': 'balanced',
+        'Q3_K_M': 'compressed', 'Q3_K_S': 'compressed', 'Q3_K_L': 'compressed',
+        'Q2_K': 'compressed',
+        'Q8': 'high', 'Q6': 'high', 'Q4': 'balanced', 'Q2': 'compressed'
       };
       
-      const filledBlocks = quantMap[quant] || 3;
-      const bars = [];
-      for (let i = 0; i < 5; i++) {
-        const isFilled = i < filledBlocks;
-        bars.push(isFilled ? '█' : '░');
-      }
-      
+      const tier = quantMap[quant] || 'balanced';
       let label = 'Balanced';
-      if (filledBlocks >= 4.5) label = 'High Quality';
-      else if (filledBlocks <= 1.5) label = 'Compressed';
+      if (tier === 'high') label = 'High Quality';
+      else if (tier === 'compressed') label = 'Compressed';
       
-      return `<span title="Auto-optimized for your hardware" style="font-family: monospace; font-size: 1em; color: #667eea;">${bars.join('')}</span> <span style="font-size: 0.85em; color: #666;">${quant} (${label})</span>`;
+      return `<span style="font-size: 0.85em; color: #666;">${quant} (${label})</span>`;
     }
 
     function renderResults(results, hardware, useCase, sortBy) {
@@ -648,7 +642,7 @@
         <div class="info-box" style="margin-bottom: 20px;">
           <strong>📊 Understanding the Results:</strong><br>
           <strong>Score:</strong> Overall fit for YOUR hardware (0-100). Higher = better for your specific setup.<br>
-          <strong>Optimization:</strong> Data compression level. █ indicates high fidelity, ░ indicates compact size. Auto-optimized for your hardware to balance quality and memory.<br>
+          <strong>Optimization:</strong> Compression level: High Quality = less compressed, Balanced = moderate compression, Compressed = more compressed. Auto-optimized for your hardware.<br>
           <strong>Model Capability:</strong> How intelligent/capable this model is (0-100), independent of compression.<br>
           <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
           <strong>Memory:</strong> Percentage of your VRAM the model uses.
@@ -717,25 +711,20 @@
 
     // Sort function (reusable)
     function applySortToResults(results, sortBy) {
-      let sorted = [...results];
+      // Always create a fresh copy
+      let sorted = JSON.parse(JSON.stringify(results));
 
-      switch(sortBy) {
-        case 'quality':
-          sorted.sort((a, b) => b.scores.quality - a.scores.quality);
-          break;
-        case 'speed':
-          sorted.sort((a, b) => b.estimatedTps - a.estimatedTps);
-          break;
-        case 'params':
-          sorted.sort((a, b) => b.paramsBillions - a.paramsBillions);
-          break;
-        case 'fit':
-          sorted.sort((a, b) => b.scores.fit - a.scores.fit);
-          break;
-        case 'score':
-        default:
-          sorted = results;
-          break;
+      if (sortBy === 'quality') {
+        sorted.sort((a, b) => b.scores.quality - a.scores.quality);
+      } else if (sortBy === 'speed') {
+        sorted.sort((a, b) => b.estimatedTps - a.estimatedTps);
+      } else if (sortBy === 'params') {
+        sorted.sort((a, b) => b.paramsBillions - a.paramsBillions);
+      } else if (sortBy === 'fit') {
+        sorted.sort((a, b) => b.scores.fit - a.scores.fit);
+      } else {
+        // Default: sort by composite score (best for setup)
+        sorted.sort((a, b) => b.compositeScore - a.compositeScore);
       }
 
       return sorted;
