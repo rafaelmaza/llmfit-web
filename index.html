@@ -606,8 +606,13 @@
     function renderResults(results, hardware, useCase, sortBy) {
       const resultsContainer = document.getElementById('resultsContainer');
       
-      // Store results for sorting
-      window.currentResults = results;
+      // Store ORIGINAL results for re-sorting (not the sorted version)
+      // Only update if we have new results (new search), not if we're just re-sorting
+      if (!window.currentResults || window.currentResults !== results) {
+        window.originalResults = [...results]; // Keep original for future sorts
+      }
+      
+      window.currentResults = window.originalResults;
       window.currentHardware = hardware;
       window.currentUseCase = useCase;
       if (sortBy) window.currentSortBy = sortBy;
@@ -736,7 +741,12 @@
       const sortBy = sortBySelect ? sortBySelect.value : 'score';
 
       window.currentSortBy = sortBy;
-      const sorted = applySortToResults(window.currentResults, sortBy);
+      // Always sort from the ORIGINAL unsorted results
+      const toSort = window.originalResults ? [...window.originalResults] : [...(window.currentResults || [])];
+      const sorted = applySortToResults(toSort, sortBy);
+      
+      // Re-render with sorted results
+      window.currentResults = window.originalResults; // Reset to original
       renderResults(sorted, window.currentHardware, window.currentUseCase, sortBy);
     }
 
