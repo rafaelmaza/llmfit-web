@@ -661,6 +661,12 @@
       }
 
       resultsContainer.innerHTML = html;
+      
+      // Restore sort selection if we have a stored value
+      if (window.currentSortBy) {
+        const selectEl = document.getElementById('sortBy');
+        if (selectEl) selectEl.value = window.currentSortBy;
+      }
     }
 
     // Update sorting
@@ -687,6 +693,7 @@
           break;
       }
 
+      window.currentSortBy = sortBy; // Store the current sort
       renderResults(sorted, window.currentHardware, window.currentUseCase);
     }
 
