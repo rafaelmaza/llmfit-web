@@ -567,8 +567,9 @@
       try {
         const scored = scoreModelsCore(allModels, hardware, useCase);
 
-        // Render results
-        renderResults(scored, hardware, useCase);
+        // Render results with default sort
+        window.currentSortBy = 'score';
+        renderResults(scored, hardware, useCase, 'score');
       } catch (err) {
         resultsContainer.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
       }
@@ -608,13 +609,14 @@
       return `<span title="Auto-optimized for your hardware" style="font-family: monospace; font-size: 1em; color: #667eea;">${bars.join('')}</span> <span style="font-size: 0.85em; color: #666;">${quant} (${label})</span>`;
     }
 
-    function renderResults(results, hardware, useCase) {
+    function renderResults(results, hardware, useCase, sortBy) {
       const resultsContainer = document.getElementById('resultsContainer');
       
       // Store results for sorting
       window.currentResults = results;
       window.currentHardware = hardware;
       window.currentUseCase = useCase;
+      if (sortBy) window.currentSortBy = sortBy;
 
       let runnable = results.filter(r => r.fitLevel !== FitLevel.TOO_TIGHT);
 
@@ -704,17 +706,18 @@
 
       resultsContainer.innerHTML = html;
       
-      // Restore sort selection if we have a stored value
-      if (window.currentSortBy) {
+      // Restore sort selection after DOM is updated
+      setTimeout(() => {
         const selectEl = document.getElementById('sortBy');
-        if (selectEl) selectEl.value = window.currentSortBy;
-      }
+        if (selectEl && window.currentSortBy) {
+          selectEl.value = window.currentSortBy;
+        }
+      }, 0);
     }
 
-    // Update sorting
-    window.updateSort = function() {
-      const sortBy = document.getElementById('sortBy').value;
-      let sorted = [...window.currentResults];
+    // Sort function (reusable)
+    function applySortToResults(results, sortBy) {
+      let sorted = [...results];
 
       switch(sortBy) {
         case 'quality':
@@ -731,12 +734,21 @@
           break;
         case 'score':
         default:
-          sorted = window.currentResults; // Default ordering
+          sorted = results;
           break;
       }
 
-      window.currentSortBy = sortBy; // Store the current sort
-      renderResults(sorted, window.currentHardware, window.currentUseCase);
+      return sorted;
+    }
+
+    // Update sorting
+    window.updateSort = function() {
+      const sortBySelect = document.getElementById('sortBy');
+      const sortBy = sortBySelect ? sortBySelect.value : 'score';
+
+      window.currentSortBy = sortBy;
+      const sorted = applySortToResults(window.currentResults, sortBy);
+      renderResults(sorted, window.currentHardware, window.currentUseCase, sortBy);
     }
 
     // URL parameter functions
