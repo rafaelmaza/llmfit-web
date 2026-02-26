@@ -1,0 +1,22 @@
+{
+  "name": "llmfit-web",
+  "version": "0.1.0",
+  "description": "Web interface for llmfit — find what LLM runs on your hardware",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test test/**/*.test.js",
+    "dev": "python3 -m http.server 8000 --directory .",
+    "build": "echo 'Build not yet implemented'"
+  },
+  "keywords": [
+    "llm",
+    "hardware",
+    "model-fit",
+    "gpu",
+    "inference"
+  ],
+  "author": "rafael",
+  "license": "MIT",
+  "devDependencies": {}
+}
