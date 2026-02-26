@@ -591,12 +591,11 @@
         bars.push(isFilled ? '█' : '░');
       }
       
-      const labels = ['Compressed', 'Balanced', 'High Quality'];
       let label = 'Balanced';
       if (filledBlocks >= 4.5) label = 'High Quality';
       else if (filledBlocks <= 1.5) label = 'Compressed';
       
-      return `<span title="Auto-optimized for your hardware (${quant})" style="font-family: monospace; font-size: 1em; color: #667eea;">${bars.join('')}</span> <span style="font-size: 0.85em; color: #999;">${label}</span>`;
+      return `<span title="Auto-optimized for your hardware" style="font-family: monospace; font-size: 1em; color: #667eea;">${bars.join('')}</span> <span style="font-size: 0.85em; color: #666;">${quant} (${label})</span>`;
     }
 
     function renderResults(results, hardware, useCase) {
@@ -636,8 +635,9 @@
 
         <div class="info-box" style="margin-bottom: 20px;">
           <strong>📊 Understanding the Results:</strong><br>
-          <strong>Score:</strong> Overall fit for YOUR hardware (0-100). Combines speed, fit, quality, and context. Higher = better for your setup.<br>
-          <strong>Quality/Size:</strong> Visual balance between model quality and file size. Auto-optimized for your hardware. █ = higher quality, ░ = more compressed.<br>
+          <strong>Score:</strong> Overall fit for YOUR hardware (0-100). Higher = better for your specific setup.<br>
+          <strong>Optimization:</strong> How the model data is compressed. █ = less compression (higher quality), ░ = more compression (smaller file). Auto-optimized for your hardware.<br>
+          <strong>Model Capability:</strong> How intelligent/capable this model is (0-100), independent of compression.<br>
           <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
           <strong>Memory:</strong> Percentage of your VRAM the model uses.
         </div>
@@ -677,13 +677,13 @@
                   <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label" title="Balance between quality and file size (auto-optimized for your hardware)">Quality/Size</div>
+                  <div class="detail-label" title="How the model data is compressed for your hardware">Optimization</div>
                   <div style="display: flex; gap: 8px; align-items: center;">
                     ${getQuantizationBar(r.bestQuant)}
                   </div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Model Quality</div>
+                  <div class="detail-label" title="How intelligent/capable this model is">Model Capability</div>
                   <div class="detail-value">${r.scores.quality.toFixed(0)}/100</div>
                 </div>
               </div>
