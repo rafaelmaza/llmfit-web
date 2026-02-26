@@ -569,6 +569,36 @@
       return `title="${text}" style="cursor: help; border-bottom: 1px dotted #999;"`;
     }
 
+    // Get visual quantization bar
+    function getQuantizationBar(quant) {
+      // Map quantization to quality level (0-5 filled blocks)
+      const quantMap = {
+        'F32': 5, 'F16': 5, 'BF16': 5,
+        'Q8_0': 5, 'Q8_1': 4.5,
+        'Q7_K_M': 4.5, 'Q7_K_S': 4.5,
+        'Q6_K': 4,
+        'Q5_K_M': 3.5, 'Q5_K_S': 3.5, 'Q5_M': 3.5, 'Q5_0': 3.5,
+        'Q4_K_M': 3, 'Q4_K_S': 3, 'Q4_1': 3, 'Q4_0': 3,
+        'Q3_K_M': 2, 'Q3_K_S': 2, 'Q3_K_L': 2,
+        'Q2_K': 1,
+        'Q8': 5, 'Q6': 4, 'Q4': 3, 'Q2': 1
+      };
+      
+      const filledBlocks = quantMap[quant] || 3;
+      const bars = [];
+      for (let i = 0; i < 5; i++) {
+        const isFilled = i < filledBlocks;
+        bars.push(isFilled ? '█' : '░');
+      }
+      
+      const labels = ['Compressed', 'Balanced', 'High Quality'];
+      let label = 'Balanced';
+      if (filledBlocks >= 4.5) label = 'High Quality';
+      else if (filledBlocks <= 1.5) label = 'Compressed';
+      
+      return `<span title="Auto-optimized for your hardware (${quant})" style="font-family: monospace; font-size: 1em; color: #667eea;">${bars.join('')}</span> <span style="font-size: 0.85em; color: #999;">${label}</span>`;
+    }
+
     function renderResults(results, hardware, useCase) {
       const resultsContainer = document.getElementById('resultsContainer');
       
@@ -605,9 +635,9 @@
         </div>
 
         <div class="info-box" style="margin-bottom: 20px;">
-          <strong>📊 Understanding the Scores:</strong><br>
-          <strong>Score (top-right):</strong> Overall fit for YOUR hardware (0-100). Combines speed, fit, quality, and context. Higher = better for your specific setup.<br>
-          <strong>Quality:</strong> Model capability (parameter count, reputation, quantization). Not all high-quality models need high specs.<br>
+          <strong>📊 Understanding the Results:</strong><br>
+          <strong>Score:</strong> Overall fit for YOUR hardware (0-100). Combines speed, fit, quality, and context. Higher = better for your setup.<br>
+          <strong>Quality/Size:</strong> Visual balance between model quality and file size. Auto-optimized for your hardware. █ = higher quality, ░ = more compressed.<br>
           <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
           <strong>Memory:</strong> Percentage of your VRAM the model uses.
         </div>
@@ -647,11 +677,13 @@
                   <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Quantization</div>
-                  <div class="detail-value">${r.bestQuant}</div>
+                  <div class="detail-label" title="Balance between quality and file size (auto-optimized for your hardware)">Quality/Size</div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    ${getQuantizationBar(r.bestQuant)}
+                  </div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Quality</div>
+                  <div class="detail-label">Model Quality</div>
                   <div class="detail-value">${r.scores.quality.toFixed(0)}/100</div>
                 </div>
               </div>
