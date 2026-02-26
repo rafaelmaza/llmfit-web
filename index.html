@@ -52,6 +52,38 @@
       }
     }
 
+    @media (max-width: 640px) {
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .panel {
+        padding: 20px;
+      }
+
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .results-header > div:last-child {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .results-header select {
+        width: 100%;
+      }
+
+      .model-details {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .info-box {
+        font-size: 0.85em;
+      }
+    }
+
     .panel {
       background: white;
       border-radius: 12px;
@@ -532,25 +564,27 @@
             <h2>Results</h2>
             <small style="color: #999; font-size: 0.85em;">For: ${hardwareSummary} • ${systemRam}GB RAM • ${useCase}</small>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <label style="font-size: 0.9em; color: #666;">Sort by:</label>
-            <select id="sortBy" onchange="updateSort()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em;">
-              <option value="score">Best for Your Setup</option>
-              <option value="quality">Most Capable (Quality)</option>
-              <option value="speed">Fastest</option>
-              <option value="params">Largest</option>
-              <option value="fit">Best Memory Fit</option>
-            </select>
-            <span class="results-count">${runnable.length} of ${results.length}</span>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort by:</label>
+              <select id="sortBy" onchange="updateSort()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; flex-grow: 1; min-width: 150px;">
+                <option value="score">Best for Your Setup</option>
+                <option value="quality">Most Capable (Quality)</option>
+                <option value="speed">Fastest</option>
+                <option value="params">Largest</option>
+                <option value="fit">Best Memory Fit</option>
+              </select>
+            </div>
+            <span class="results-count" style="white-space: nowrap;">${runnable.length} of ${results.length}</span>
           </div>
         </div>
 
-        <div class="info-box" style="margin-bottom: 20px; font-size: 0.85em;">
-          <strong>📊 Score Guide:</strong>
-          <span ${tooltip('Overall rating for YOUR hardware (0-100). Combines speed, fit, quality, and context.')}> Score ℹ️</span> |
-          <span ${tooltip('Model capability: parameter count, reputation, quantization quality.')}>Quality ℹ️</span> |
-          <span ${tooltip('Est. tokens/second on your hardware.')}>Speed ℹ️</span> |
-          <span ${tooltip('How much of your VRAM the model uses.')}>Memory ℹ️</span>
+        <div class="info-box" style="margin-bottom: 20px;">
+          <strong>📊 Understanding the Scores:</strong><br>
+          <strong>Score (top-right):</strong> Overall fit for YOUR hardware (0-100). Combines speed, fit, quality, and context. Higher = better for your specific setup.<br>
+          <strong>Quality:</strong> Model capability (parameter count, reputation, quantization). Not all high-quality models need high specs.<br>
+          <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
+          <strong>Memory:</strong> Percentage of your VRAM the model uses.
         </div>
       `;
 
