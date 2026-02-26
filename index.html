@@ -57,6 +57,10 @@
         font-size: 1.8em;
       }
 
+      .main {
+        grid-template-columns: 1fr;
+      }
+
       .panel {
         padding: 20px;
       }
@@ -81,6 +85,11 @@
 
       .info-box {
         font-size: 0.85em;
+      }
+
+      /* Ensure radio buttons don't wrap */
+      label {
+        flex-shrink: 0;
       }
     }
 
@@ -271,10 +280,6 @@
       color: #999;
     }
 
-    .results-hidden {
-      display: none;
-    }
-
     .error {
       background: #f8d7da;
       color: #721c24;
@@ -328,13 +333,13 @@
 
         <!-- GPU Selection Mode -->
         <div class="form-group">
-          <label style="font-weight: 700; margin-bottom: 12px;">Do you have a GPU?</label>
-          <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
-              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()" style="margin-right: 6px;"> Yes
+          <label style="font-weight: 700; margin-bottom: 12px; display: block;">Do you have a GPU?</label>
+          <div style="display: flex; gap: 30px; align-items: center;">
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer; white-space: nowrap;">
+              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()" style="margin-right: 8px; cursor: pointer;"> Yes
             </label>
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
-              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()" style="margin-right: 6px;"> No (CPU only)
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer; white-space: nowrap;">
+              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()" style="margin-right: 8px; cursor: pointer;"> No (CPU only)
             </label>
           </div>
         </div>
@@ -387,7 +392,7 @@
       </div>
 
       <!-- Results Panel -->
-      <div class="panel" id="resultsPanel" class="results-hidden">
+      <div class="panel" id="resultsPanel" style="display: none;">
         <div id="resultsContainer"></div>
       </div>
     </div>
@@ -495,7 +500,7 @@
 
       // Show results panel and loading
       const resultsPanel = document.getElementById('resultsPanel');
-      resultsPanel.classList.remove('results-hidden');
+      resultsPanel.style.display = 'block';
       resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Analyzing 206 models...</div>';
 
       // Build hardware spec
