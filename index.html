@@ -812,6 +812,15 @@
     // Initialize on page load
     initGpuDropdown();
     applyUrlParams();
+    
+    // Auto-submit if URL has parameters
+    setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('gpu') || params.has('gpuMode') || params.has('customVram')) {
+        // User opened a link with pre-filled params, auto-search
+        scoreModels();
+      }
+    }, 100);
   </script>
 </body>
 </html>
