@@ -101,48 +101,65 @@
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     label {
       display: block;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       color: #333;
       font-size: 0.95em;
+      letter-spacing: 0.3px;
     }
 
     select, input {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border: 2px solid #e0e0e0;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 1em;
       font-family: inherit;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
+      background-color: white;
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      padding-right: 36px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
     }
 
     select:focus, input:focus {
       outline: none;
       border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    select:hover {
+      border-color: #667eea;
     }
 
     button {
       width: 100%;
-      padding: 12px 20px;
+      padding: 14px 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 1em;
+      border-radius: 8px;
+      font-size: 1.05em;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
 
     button:active {
@@ -335,11 +352,11 @@
         <div class="form-group">
           <label style="font-weight: 700; margin-bottom: 12px; display: block;">Do you have a GPU?</label>
           <div style="display: flex; gap: 30px; align-items: center;">
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer; white-space: nowrap;">
-              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()" style="margin-right: 8px; cursor: pointer;"> Yes
+            <label style="display: flex; align-items: center; font-weight: 500; cursor: pointer; white-space: nowrap;">
+              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()" style="width: 20px; height: 20px; cursor: pointer; margin-right: 8px; accent-color: #667eea;"> Yes
             </label>
-            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer; white-space: nowrap;">
-              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()" style="margin-right: 8px; cursor: pointer;"> No (CPU only)
+            <label style="display: flex; align-items: center; font-weight: 500; cursor: pointer; white-space: nowrap;">
+              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()" style="width: 20px; height: 20px; cursor: pointer; margin-right: 8px; accent-color: #667eea;"> No (CPU only)
             </label>
           </div>
         </div>
@@ -481,6 +498,7 @@
     // Score models
     window.scoreModels = async function() {
       const resultsContainer = document.getElementById('resultsContainer');
+      const resultsPanel = document.getElementById('resultsPanel');
       const gpuMode = document.querySelector('input[name="gpuMode"]:checked').value;
       const gpuModel = document.getElementById('gpuModel').value;
       const customVram = parseFloat(document.getElementById('customVram').value);
@@ -489,17 +507,18 @@
 
       // Validate input
       if (gpuMode === 'yes' && !gpuModel) {
-        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU model</div>';
+        resultsPanel.style.display = 'block';
+        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU model from the dropdown</div>';
         return;
       }
 
       if (gpuMode === 'yes' && gpuModel === 'OTHER' && isNaN(customVram)) {
+        resultsPanel.style.display = 'block';
         resultsContainer.innerHTML = '<div class="error">⚠️ Please enter a VRAM value</div>';
         return;
       }
 
       // Show results panel and loading
-      const resultsPanel = document.getElementById('resultsPanel');
       resultsPanel.style.display = 'block';
       resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Analyzing 206 models...</div>';
 
@@ -570,24 +589,19 @@
       const systemRam = parseInt(document.getElementById('systemRam').value);
 
       let html = `
-        <div class="results-header">
-          <div>
-            <h2>Results</h2>
-            <small style="color: #999; font-size: 0.85em;">For: ${hardwareSummary} • ${systemRam}GB RAM • ${useCase}</small>
+        <h2 style="margin-bottom: 15px;">Results</h2>
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; justify-content: space-between;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort by:</label>
+            <select id="sortBy" onchange="updateSort()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em;">
+              <option value="score">Best for Your Setup</option>
+              <option value="quality">Most Capable (Quality)</option>
+              <option value="speed">Fastest</option>
+              <option value="params">Largest</option>
+              <option value="fit">Best Memory Fit</option>
+            </select>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort by:</label>
-              <select id="sortBy" onchange="updateSort()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; flex-grow: 1; min-width: 150px;">
-                <option value="score">Best for Your Setup</option>
-                <option value="quality">Most Capable (Quality)</option>
-                <option value="speed">Fastest</option>
-                <option value="params">Largest</option>
-                <option value="fit">Best Memory Fit</option>
-              </select>
-            </div>
-            <span class="results-count" style="white-space: nowrap;">${runnable.length} of ${results.length}</span>
-          </div>
+          <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${runnable.length} of ${results.length} models</span>
         </div>
 
         <div class="info-box" style="margin-bottom: 20px;">
