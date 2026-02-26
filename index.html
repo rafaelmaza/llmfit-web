@@ -290,23 +290,36 @@
       <div class="panel">
         <h2 style="margin-bottom: 25px; color: #333;">Your Hardware</h2>
 
-        <!-- GPU Model Selection -->
+        <!-- GPU Selection Mode -->
         <div class="form-group">
-          <label for="gpuModel">GPU / Hardware</label>
-          <select id="gpuModel" onchange="updateGpuMode()">
-            <option value="">-- Select GPU or Option Below --</option>
-          </select>
-          <small style="color: #999; margin-top: 5px; display: block;">Don't see yours? Use "Custom VRAM" option</small>
+          <label style="font-weight: 700; margin-bottom: 12px;">Do you have a GPU?</label>
+          <div style="display: flex; gap: 12px;">
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
+              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()"> Yes
+            </label>
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
+              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()"> No (CPU only)
+            </label>
+          </div>
         </div>
 
-        <!-- Custom VRAM Input (shown when GPU=custom) -->
+        <!-- GPU Model Selection (shown when GPU=yes) -->
+        <div id="gpuModelSection" class="form-group">
+          <label for="gpuModel">Select Your GPU</label>
+          <select id="gpuModel" onchange="updateGpuMode()">
+            <option value="">-- Choose GPU --</option>
+          </select>
+          <small style="color: #999; margin-top: 5px; display: block;">Can't find yours? Select "Other" below</small>
+        </div>
+
+        <!-- Custom VRAM Input (shown when GPU=other) -->
         <div id="customVramSection" class="form-group" style="display: none;">
           <label for="customVram">Custom VRAM (GB)</label>
-          <input type="number" id="customVram" placeholder="e.g., 24" min="0" step="0.5" onchange="updateGpuMode()">
-          <small style="color: #999; margin-top: 5px; display: block;">Enter 0 for CPU-only inference</small>
+          <input type="number" id="customVram" placeholder="e.g., 24" min="0.5" step="0.5" onchange="updateGpuMode()">
+          <small style="color: #999; margin-top: 5px; display: block;">Enter your GPU's VRAM in gigabytes</small>
         </div>
 
-        <!-- CPU-only message (shown when custom VRAM=0) -->
+        <!-- CPU-only message (shown when GPU=no) -->
         <div id="cpuOnlyMessage" style="display: none; background: #e7f3ff; color: #004085; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9em;">
           ⚠️ <strong>CPU-only inference:</strong> Models will run on system RAM only. Expect 5-20 tokens/sec depending on CPU cores.
         </div>
@@ -396,58 +409,50 @@
         gpuSelect.appendChild(optgroup);
       });
 
-      // Add special options at the end
+      // Add "Other" option at the end
       const separator = document.createElement('optgroup');
       separator.label = '─────';
       separator.disabled = true;
       gpuSelect.appendChild(separator);
 
-      const customOption = document.createElement('option');
-      customOption.value = 'CUSTOM';
-      customOption.textContent = 'Custom VRAM (enter value below)';
-      gpuSelect.appendChild(customOption);
-
-      const cpuOption = document.createElement('option');
-      cpuOption.value = 'CPU';
-      cpuOption.textContent = 'CPU-only (no GPU)';
-      gpuSelect.appendChild(cpuOption);
+      const otherOption = document.createElement('option');
+      otherOption.value = 'OTHER';
+      otherOption.textContent = 'Other (custom VRAM)';
+      gpuSelect.appendChild(otherOption);
     }
 
     // Update GPU mode UI
     window.updateGpuMode = function() {
-      const gpuModel = document.getElementById('gpuModel').value;
+      const gpuMode = document.querySelector('input[name="gpuMode"]:checked').value;
+      const gpuModelSection = document.getElementById('gpuModelSection');
       const customVramSection = document.getElementById('customVramSection');
       const cpuOnlyMessage = document.getElementById('cpuOnlyMessage');
-      const customVramInput = document.getElementById('customVram');
+      const gpuModel = document.getElementById('gpuModel').value;
 
-      if (gpuModel === 'CUSTOM') {
-        customVramSection.style.display = 'block';
-        cpuOnlyMessage.style.display = 'none';
-      } else if (gpuModel === 'CPU') {
-        customVramSection.style.display = 'block';
-        customVramInput.value = '0';
-        cpuOnlyMessage.style.display = 'block';
-      } else {
-        customVramSection.style.display = 'none';
-        cpuOnlyMessage.style.display = 'none';
-      }
+      // Show/hide GPU selector and custom VRAM based on radio button
+      gpuModelSection.style.display = gpuMode === 'yes' ? 'block' : 'none';
+      cpuOnlyMessage.style.display = gpuMode === 'no' ? 'block' : 'none';
+
+      // Show custom VRAM input if "Other" is selected
+      customVramSection.style.display = gpuMode === 'yes' && gpuModel === 'OTHER' ? 'block' : 'none';
     }
 
     // Score models
     window.scoreModels = async function() {
       const resultsContainer = document.getElementById('resultsContainer');
+      const gpuMode = document.querySelector('input[name="gpuMode"]:checked').value;
       const gpuModel = document.getElementById('gpuModel').value;
       const customVram = parseFloat(document.getElementById('customVram').value);
       const systemRam = parseInt(document.getElementById('systemRam').value);
       const useCase = document.getElementById('useCase').value;
 
       // Validate input
-      if (!gpuModel) {
-        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU or option</div>';
+      if (gpuMode === 'yes' && !gpuModel) {
+        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU model</div>';
         return;
       }
 
-      if ((gpuModel === 'CUSTOM' || gpuModel === 'CPU') && isNaN(customVram)) {
+      if (gpuMode === 'yes' && gpuModel === 'OTHER' && isNaN(customVram)) {
         resultsContainer.innerHTML = '<div class="error">⚠️ Please enter a VRAM value</div>';
         return;
       }
@@ -465,24 +470,23 @@
         unified: false,
       };
 
-      // Regular GPU from dropdown
-      if (gpuModel !== 'CUSTOM' && gpuModel !== 'CPU') {
-        const specs = getGpuSpecs(gpuModel);
-        if (specs) {
+      if (gpuMode === 'yes') {
+        if (gpuModel === 'OTHER') {
+          // Custom VRAM
           hardware.hasGpu = true;
-          hardware.vram = specs.vram;
-          hardware.backend = specs.backend;
-          hardware.unified = specs.unified || false;
+          hardware.vram = customVram;
+        } else if (gpuModel) {
+          // Regular GPU from dropdown
+          const specs = getGpuSpecs(gpuModel);
+          if (specs) {
+            hardware.hasGpu = true;
+            hardware.vram = specs.vram;
+            hardware.backend = specs.backend;
+            hardware.unified = specs.unified || false;
+          }
         }
-      } else if (gpuModel === 'CUSTOM' && customVram > 0) {
-        // Custom VRAM with GPU
-        hardware.hasGpu = true;
-        hardware.vram = customVram;
-      } else if (gpuModel === 'CPU' || customVram === 0) {
-        // CPU-only
-        hardware.hasGpu = false;
-        hardware.vram = 0;
       }
+      // else: CPU-only (gpuMode === 'no'), hardware already set to no GPU
 
       // Get all models
       const allModels = getAllModels();
@@ -498,9 +502,20 @@
       }
     };
 
+    // Tooltip helper
+    function tooltip(text) {
+      return `title="${text}" style="cursor: help; border-bottom: 1px dotted #999;"`;
+    }
+
     function renderResults(results, hardware, useCase) {
       const resultsContainer = document.getElementById('resultsContainer');
-      const runnable = results.filter(r => r.fitLevel !== FitLevel.TOO_TIGHT);
+      
+      // Store results for sorting
+      window.currentResults = results;
+      window.currentHardware = hardware;
+      window.currentUseCase = useCase;
+
+      let runnable = results.filter(r => r.fitLevel !== FitLevel.TOO_TIGHT);
 
       // Build hardware summary
       let hardwareSummary = '';
@@ -517,14 +532,25 @@
             <h2>Results</h2>
             <small style="color: #999; font-size: 0.85em;">For: ${hardwareSummary} • ${systemRam}GB RAM • ${useCase}</small>
           </div>
-          <span class="results-count">${runnable.length} of ${results.length}</span>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 0.9em; color: #666;">Sort by:</label>
+            <select id="sortBy" onchange="updateSort()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em;">
+              <option value="score">Best for Your Setup</option>
+              <option value="quality">Most Capable (Quality)</option>
+              <option value="speed">Fastest</option>
+              <option value="params">Largest</option>
+              <option value="fit">Best Memory Fit</option>
+            </select>
+            <span class="results-count">${runnable.length} of ${results.length}</span>
+          </div>
         </div>
 
-        <div class="info-box" style="margin-bottom: 20px;">
-          <strong>📊 Understanding the Scores:</strong><br>
-          <strong>Score (top-right):</strong> Overall fit for YOUR hardware (0-100). Higher = better for your specific setup.<br>
-          <strong>Quality:</strong> Model capability (parameter count, reputation, etc). Not all high-quality models need high specs.<br>
-          <strong>Fit Level:</strong> Does it physically fit in your VRAM? Perfect/Good/Marginal/Too Tight.
+        <div class="info-box" style="margin-bottom: 20px; font-size: 0.85em;">
+          <strong>📊 Score Guide:</strong>
+          <span ${tooltip('Overall rating for YOUR hardware (0-100). Combines speed, fit, quality, and context.')}> Score ℹ️</span> |
+          <span ${tooltip('Model capability: parameter count, reputation, quantization quality.')}>Quality ℹ️</span> |
+          <span ${tooltip('Est. tokens/second on your hardware.')}>Speed ℹ️</span> |
+          <span ${tooltip('How much of your VRAM the model uses.')}>Memory ℹ️</span>
         </div>
       `;
 
@@ -548,25 +574,25 @@
                 <div class="model-score">${r.compositeScore}</div>
               </div>
               <div class="model-meta">
-                <span class="badge ${fitClass}">${r.fitLevel}</span>
-                <span class="badge">${r.runMode}</span>
-                <span class="badge">${paramsStr}</span>
+                <span class="badge ${fitClass}" ${tooltip(`Physical fit: ${r.fitLevel}`)}>${r.fitLevel}</span>
+                <span class="badge" ${tooltip(`Run mode: ${r.runMode}`)}>${r.runMode}</span>
+                <span class="badge" ${tooltip(`Parameters: ${r.paramsBillions.toFixed(1)}B`)}>${paramsStr}</span>
               </div>
               <div class="model-details">
                 <div class="detail-item">
-                  <div class="detail-label">Speed</div>
+                  <div class="detail-label" ${tooltip('Estimated tokens/sec on your hardware')}>Speed ℹ️</div>
                   <div class="detail-value">${r.estimatedTps.toFixed(1)} tok/s</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Memory</div>
+                  <div class="detail-label" ${tooltip('Percentage of available VRAM used')}>Memory ℹ️</div>
                   <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Quantization</div>
+                  <div class="detail-label" ${tooltip('Data compression level (higher bits = better quality)')}>Quantization ℹ️</div>
                   <div class="detail-value">${r.bestQuant}</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">Quality Score</div>
+                  <div class="detail-label" ${tooltip('Model capability score (0-100)')}>Quality ℹ️</div>
                   <div class="detail-value">${r.scores.quality.toFixed(0)}/100</div>
                 </div>
               </div>
@@ -576,6 +602,33 @@
       }
 
       resultsContainer.innerHTML = html;
+    }
+
+    // Update sorting
+    window.updateSort = function() {
+      const sortBy = document.getElementById('sortBy').value;
+      let sorted = [...window.currentResults];
+
+      switch(sortBy) {
+        case 'quality':
+          sorted.sort((a, b) => b.scores.quality - a.scores.quality);
+          break;
+        case 'speed':
+          sorted.sort((a, b) => b.estimatedTps - a.estimatedTps);
+          break;
+        case 'params':
+          sorted.sort((a, b) => b.paramsBillions - a.paramsBillions);
+          break;
+        case 'fit':
+          sorted.sort((a, b) => b.scores.fit - a.scores.fit);
+          break;
+        case 'score':
+        default:
+          sorted = window.currentResults; // Default ordering
+          break;
+      }
+
+      renderResults(sorted, window.currentHardware, window.currentUseCase);
     }
 
     // Initialize on page load
