@@ -589,19 +589,19 @@
       const systemRam = parseInt(document.getElementById('systemRam').value);
 
       let html = `
-        <h2 style="margin-bottom: 15px;">Results</h2>
-        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; justify-content: space-between;">
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort by:</label>
-            <select id="sortBy" onchange="updateSort()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em;">
+        <h2 style="margin-bottom: 20px;">Results</h2>
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; justify-content: space-between; flex-wrap: wrap;">
+          <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 280px;">
+            <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort:</label>
+            <select id="sortBy" onchange="updateSort()" style="padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; flex: 1; min-width: 160px;">
               <option value="score">Best for Your Setup</option>
-              <option value="quality">Most Capable (Quality)</option>
+              <option value="quality">Most Capable</option>
               <option value="speed">Fastest</option>
               <option value="params">Largest</option>
-              <option value="fit">Best Memory Fit</option>
+              <option value="fit">Best Fit</option>
             </select>
           </div>
-          <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${runnable.length} of ${results.length} models</span>
+          <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${runnable.length} of ${results.length}</span>
         </div>
 
         <div class="info-box" style="margin-bottom: 20px;">
