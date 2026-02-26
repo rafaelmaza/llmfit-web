@@ -6,6 +6,9 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node --test test/**/*.test.js",
+    "test:unit": "node --test test/scoring.test.js",
+    "test:integration": "node test/integration.test.js",
+    "demo": "node examples/demo.js",
     "dev": "python3 -m http.server 8000 --directory .",
     "build": "echo 'Build not yet implemented'"
   },
