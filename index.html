@@ -290,16 +290,41 @@
       <div class="panel">
         <h2 style="margin-bottom: 25px; color: #333;">Your Hardware</h2>
 
+        <!-- GPU Selection Mode -->
         <div class="form-group">
-          <label for="gpuModel">GPU Model</label>
-          <select id="gpuModel">
-            <option value="">-- Select or Enter Custom --</option>
-          </select>
+          <label style="font-weight: 700; margin-bottom: 12px;">Do you have a GPU?</label>
+          <div style="display: flex; gap: 10px;">
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
+              <input type="radio" name="gpuMode" value="yes" checked onchange="updateGpuMode()"> Yes
+            </label>
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
+              <input type="radio" name="gpuMode" value="no" onchange="updateGpuMode()"> No (CPU only)
+            </label>
+            <label style="display: flex; align-items: center; font-weight: 400; cursor: pointer;">
+              <input type="radio" name="gpuMode" value="custom" onchange="updateGpuMode()"> Custom VRAM
+            </label>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="customVram">Custom VRAM (GB)</label>
+        <!-- GPU Model Selection (shown when GPU=yes) -->
+        <div id="gpuModelSection" class="form-group">
+          <label for="gpuModel">Select Your GPU</label>
+          <select id="gpuModel" onchange="updateVramFromGpu()">
+            <option value="">-- Choose GPU --</option>
+          </select>
+          <small style="color: #999; margin-top: 5px; display: block;">Can't find yours? Switch to "Custom VRAM" above</small>
+        </div>
+
+        <!-- Custom VRAM Input (shown when GPU=custom) -->
+        <div id="customVramSection" class="form-group" style="display: none;">
+          <label for="customVram">VRAM in GB</label>
           <input type="number" id="customVram" placeholder="e.g., 24" min="0" step="0.5">
+          <small style="color: #999; margin-top: 5px; display: block;">Enter your GPU's VRAM, or 0 for CPU-only inference</small>
+        </div>
+
+        <!-- CPU-only message (shown when GPU=no) -->
+        <div id="cpuOnlyMessage" style="display: none; background: #e7f3ff; color: #004085; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9em;">
+          ⚠️ <strong>CPU-only inference:</strong> Models will run on system RAM only. Expect 5-20 tokens/sec depending on CPU cores.
         </div>
 
         <div class="form-group">
@@ -326,10 +351,6 @@
         </div>
 
         <button onclick="scoreModels()">Find Models</button>
-
-        <div class="info-box" style="margin-top: 25px;">
-          <strong>💡 Tip:</strong> Leave VRAM empty to use GPU default. No GPU? Leave GPU blank and set custom VRAM to 0.
-        </div>
       </div>
 
       <!-- Results Panel -->
@@ -344,29 +365,93 @@
     import { getAllModels } from './src/models.js';
     import { getGpuSpecs, getAvailableGpus } from './src/gpus.js';
 
-    // Initialize GPU dropdown
+    // Organize GPUs by manufacturer
+    function groupGpusByManufacturer() {
+      const gpus = getAvailableGpus();
+      const groups = {
+        'NVIDIA': [],
+        'AMD': [],
+        'Apple': [],
+        'Intel': [],
+      };
+
+      gpus.forEach(gpu => {
+        if (gpu.includes('RTX') || gpu.includes('A100') || gpu.includes('A6000') || gpu.includes('A5000') || gpu.includes('A4000') || gpu.includes('A2000') || gpu.includes('T4') || gpu.includes('V100') || gpu.includes('P100')) {
+          groups['NVIDIA'].push(gpu);
+        } else if (gpu.includes('RX') || gpu.includes('MI')) {
+          groups['AMD'].push(gpu);
+        } else if (gpu.includes('M1') || gpu.includes('M2') || gpu.includes('M3') || gpu.includes('M4')) {
+          groups['Apple'].push(gpu);
+        } else if (gpu.includes('Arc')) {
+          groups['Intel'].push(gpu);
+        }
+      });
+
+      return groups;
+    }
+
+    // Initialize GPU dropdown with optgroups
     function initGpuDropdown() {
       const gpuSelect = document.getElementById('gpuModel');
-      const gpus = getAvailableGpus();
-      gpus.forEach(gpu => {
-        const option = document.createElement('option');
-        option.value = gpu;
-        option.textContent = gpu;
-        gpuSelect.appendChild(option);
+      const groups = groupGpusByManufacturer();
+
+      Object.entries(groups).forEach(([manufacturer, models]) => {
+        if (models.length === 0) return;
+
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = manufacturer;
+
+        models.forEach(gpu => {
+          const option = document.createElement('option');
+          option.value = gpu;
+          option.textContent = gpu;
+          optgroup.appendChild(option);
+        });
+
+        gpuSelect.appendChild(optgroup);
       });
+    }
+
+    // Update GPU mode UI
+    window.updateGpuMode = function() {
+      const mode = document.querySelector('input[name="gpuMode"]:checked').value;
+      const gpuModelSection = document.getElementById('gpuModelSection');
+      const customVramSection = document.getElementById('customVramSection');
+      const cpuOnlyMessage = document.getElementById('cpuOnlyMessage');
+
+      gpuModelSection.style.display = mode === 'yes' ? 'block' : 'none';
+      customVramSection.style.display = mode === 'custom' ? 'block' : 'none';
+      cpuOnlyMessage.style.display = mode === 'no' ? 'block' : 'none';
+    }
+
+    // Update VRAM display when GPU is selected
+    window.updateVramFromGpu = function() {
+      const gpuModel = document.getElementById('gpuModel').value;
+      const specs = gpuModel ? getGpuSpecs(gpuModel) : null;
+      if (specs) {
+        // Show which VRAM was auto-selected (visual feedback)
+        const gpuSelect = document.getElementById('gpuModel');
+        gpuSelect.title = `${specs.vram}GB VRAM, ${specs.backend} backend`;
+      }
     }
 
     // Score models
     window.scoreModels = async function() {
       const resultsContainer = document.getElementById('resultsContainer');
+      const gpuMode = document.querySelector('input[name="gpuMode"]:checked').value;
       const gpuModel = document.getElementById('gpuModel').value;
-      const customVram = parseFloat(document.getElementById('customVram').value) || null;
+      const customVram = parseFloat(document.getElementById('customVram').value);
       const systemRam = parseInt(document.getElementById('systemRam').value);
       const useCase = document.getElementById('useCase').value;
 
       // Validate input
-      if (!gpuModel && customVram === null) {
-        resultsContainer.innerHTML = '<div class="error">⚠️ Select a GPU or enter custom VRAM</div>';
+      if (gpuMode === 'yes' && !gpuModel) {
+        resultsContainer.innerHTML = '<div class="error">⚠️ Please select a GPU model</div>';
+        return;
+      }
+
+      if (gpuMode === 'custom' && isNaN(customVram)) {
+        resultsContainer.innerHTML = '<div class="error">⚠️ Please enter a VRAM value</div>';
         return;
       }
 
@@ -377,24 +462,25 @@
       let hardware = {
         backend: 'CUDA',
         cpuCores: 8,
-        hasGpu: true,
-        vram: customVram,
+        hasGpu: false,
+        vram: 0,
         systemRam: systemRam,
         unified: false,
       };
 
-      if (gpuModel) {
+      if (gpuMode === 'yes' && gpuModel) {
         const specs = getGpuSpecs(gpuModel);
         if (specs) {
+          hardware.hasGpu = true;
           hardware.vram = specs.vram;
           hardware.backend = specs.backend;
           hardware.unified = specs.unified || false;
         }
-      }
-
-      if (!hardware.vram) {
-        hardware.hasGpu = false;
-        hardware.vram = 0;
+      } else if (gpuMode === 'custom') {
+        if (customVram > 0) {
+          hardware.hasGpu = true;
+          hardware.vram = customVram;
+        }
       }
 
       // Get all models
@@ -415,9 +501,21 @@
       const resultsContainer = document.getElementById('resultsContainer');
       const runnable = results.filter(r => r.fitLevel !== FitLevel.TOO_TIGHT);
 
+      // Build hardware summary
+      let hardwareSummary = '';
+      if (hardware.hasGpu) {
+        hardwareSummary = `${hardware.vram}GB ${hardware.backend}`;
+      } else {
+        hardwareSummary = 'CPU-only';
+      }
+      const systemRam = parseInt(document.getElementById('systemRam').value);
+
       let html = `
         <div class="results-header">
-          <h2>Results</h2>
+          <div>
+            <h2>Results</h2>
+            <small style="color: #999; font-size: 0.85em;">For: ${hardwareSummary} • ${systemRam}GB RAM • ${useCase}</small>
+          </div>
           <span class="results-count">${runnable.length} of ${results.length}</span>
         </div>
       `;
