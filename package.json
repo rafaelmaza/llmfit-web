@@ -10,6 +10,8 @@
     "test:integration": "node test/integration.test.js",
     "demo": "node examples/demo.js",
     "dev": "python3 -m http.server 8000 --directory .",
+    "server": "node server.js",
+    "start": "node server.js",
     "build": "echo 'Build not yet implemented'"
   },
   "keywords": [

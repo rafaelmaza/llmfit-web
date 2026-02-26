@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>llmfit-web — Find Your LLM</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1024px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 0.95em;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1em;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #667eea;
+      font-size: 1.1em;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .results {
+      margin-top: 30px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .results-header h2 {
+      color: #333;
+      font-size: 1.3em;
+    }
+
+    .results-count {
+      background: #f0f0f0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .model-card {
+      background: white;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      transition: box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .model-card:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .model-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95em;
+      max-width: 70%;
+    }
+
+    .model-score {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .model-meta {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      font-size: 0.85em;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      background: #f0f0f0;
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: #555;
+    }
+
+    .fit-perfect { background: #d4edda; color: #155724; }
+    .fit-good { background: #d1ecf1; color: #0c5460; }
+    .fit-marginal { background: #fff3cd; color: #856404; }
+    .fit-too-tight { background: #f8d7da; color: #721c24; }
+
+    .model-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .detail-item {
+      font-size: 0.9em;
+    }
+
+    .detail-label {
+      color: #999;
+      font-size: 0.8em;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border-left: 4px solid #f5c6cb;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      color: #004085;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+      animation: fillProgress 0.5s ease-out;
+    }
+
+    @keyframes fillProgress {
+      from { width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧦 llmfit-web</h1>
+      <p>Find what LLM runs on your hardware</p>
+    </header>
+
+    <div class="main">
+      <!-- Input Panel -->
+      <div class="panel">
+        <h2 style="margin-bottom: 25px; color: #333;">Your Hardware</h2>
+
+        <div class="form-group">
+          <label for="gpuModel">GPU Model</label>
+          <select id="gpuModel">
+            <option value="">-- Select or Enter Custom --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="customVram">Custom VRAM (GB)</label>
+          <input type="number" id="customVram" placeholder="e.g., 24" min="0" step="0.5">
+        </div>
+
+        <div class="form-group">
+          <label for="systemRam">System RAM (GB)</label>
+          <select id="systemRam">
+            <option value="8">8 GB</option>
+            <option value="16">16 GB</option>
+            <option value="32" selected>32 GB</option>
+            <option value="64">64 GB</option>
+            <option value="128">128 GB</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="useCase">Use Case</label>
+          <select id="useCase">
+            <option value="General">General Purpose</option>
+            <option value="Coding">Coding</option>
+            <option value="Reasoning">Reasoning</option>
+            <option value="Chat">Chat</option>
+            <option value="Multimodal">Multimodal (Vision)</option>
+            <option value="Embedding">Embedding</option>
+          </select>
+        </div>
+
+        <button onclick="scoreModels()">Find Models</button>
+
+        <div class="info-box" style="margin-top: 25px;">
+          <strong>💡 Tip:</strong> Leave VRAM empty to use GPU default. No GPU? Leave GPU blank and set custom VRAM to 0.
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="panel">
+        <div id="resultsContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { scoreModels as scoreModelsCore, UseCase, FitLevel, RunMode } from './src/scoring.js';
+    import { getAllModels } from './src/models.js';
+    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js';
+
+    // Initialize GPU dropdown
+    function initGpuDropdown() {
+      const gpuSelect = document.getElementById('gpuModel');
+      const gpus = getAvailableGpus();
+      gpus.forEach(gpu => {
+        const option = document.createElement('option');
+        option.value = gpu;
+        option.textContent = gpu;
+        gpuSelect.appendChild(option);
+      });
+    }
+
+    // Score models
+    window.scoreModels = async function() {
+      const resultsContainer = document.getElementById('resultsContainer');
+      const gpuModel = document.getElementById('gpuModel').value;
+      const customVram = parseFloat(document.getElementById('customVram').value) || null;
+      const systemRam = parseInt(document.getElementById('systemRam').value);
+      const useCase = document.getElementById('useCase').value;
+
+      // Validate input
+      if (!gpuModel && customVram === null) {
+        resultsContainer.innerHTML = '<div class="error">⚠️ Select a GPU or enter custom VRAM</div>';
+        return;
+      }
+
+      // Show loading
+      resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Analyzing 206 models...</div>';
+
+      // Build hardware spec
+      let hardware = {
+        backend: 'CUDA',
+        cpuCores: 8,
+        hasGpu: true,
+        vram: customVram,
+        systemRam: systemRam,
+        unified: false,
+      };
+
+      if (gpuModel) {
+        const specs = getGpuSpecs(gpuModel);
+        if (specs) {
+          hardware.vram = specs.vram;
+          hardware.backend = specs.backend;
+          hardware.unified = specs.unified || false;
+        }
+      }
+
+      if (!hardware.vram) {
+        hardware.hasGpu = false;
+        hardware.vram = 0;
+      }
+
+      // Get all models
+      const allModels = getAllModels();
+
+      // Score them
+      try {
+        const scored = scoreModelsCore(allModels, hardware, useCase);
+
+        // Render results
+        renderResults(scored, hardware, useCase);
+      } catch (err) {
+        resultsContainer.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+      }
+    };
+
+    function renderResults(results, hardware, useCase) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      const runnable = results.filter(r => r.fitLevel !== FitLevel.TOO_TIGHT);
+
+      let html = `
+        <div class="results-header">
+          <h2>Results</h2>
+          <span class="results-count">${runnable.length} of ${results.length}</span>
+        </div>
+      `;
+
+      if (runnable.length === 0) {
+        html += '<div class="no-results">😞 No models fit your hardware. Try a different configuration.</div>';
+      } else {
+        runnable.slice(0, 50).forEach(r => {
+          const fitClass = `fit-${r.fitLevel.toLowerCase().replace(' ', '-')}`;
+          const paramsStr = r.paramsBillions < 1 
+            ? `${(r.paramsBillions * 1000).toFixed(0)}M`
+            : r.paramsBillions < 10
+            ? `${r.paramsBillions.toFixed(1)}B`
+            : `${Math.round(r.paramsBillions)}B`;
+
+          const modelDisplayName = r.model.split('/').pop();
+
+          html += `
+            <div class="model-card">
+              <div class="model-header">
+                <div class="model-name" title="${r.model}">${modelDisplayName}</div>
+                <div class="model-score">${r.compositeScore}</div>
+              </div>
+              <div class="model-meta">
+                <span class="badge ${fitClass}">${r.fitLevel}</span>
+                <span class="badge">${r.runMode}</span>
+                <span class="badge">${paramsStr}</span>
+              </div>
+              <div class="model-details">
+                <div class="detail-item">
+                  <div class="detail-label">Speed</div>
+                  <div class="detail-value">${r.estimatedTps.toFixed(1)} tok/s</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Memory</div>
+                  <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Quantization</div>
+                  <div class="detail-value">${r.bestQuant}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Quality Score</div>
+                  <div class="detail-value">${r.scores.quality.toFixed(0)}/100</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      resultsContainer.innerHTML = html;
+    }
+
+    // Initialize on page load
+    initGpuDropdown();
+  </script>
+</body>
+</html>
