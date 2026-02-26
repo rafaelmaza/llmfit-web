@@ -633,7 +633,7 @@
         <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; justify-content: space-between; flex-wrap: wrap;">
           <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 280px;">
             <label style="font-size: 0.9em; color: #666; white-space: nowrap;">Sort:</label>
-            <select id="sortBy" onchange="updateSort()" style="padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; flex: 1; min-width: 160px;">
+            <select id="sortBy" onchange="updateSort(); updateUrlParams();" style="padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; flex: 1; min-width: 160px;">
               <option value="score">Best for Your Setup</option>
               <option value="quality">Most Capable</option>
               <option value="speed">Fastest</option>
@@ -758,7 +758,8 @@
         gpuMode: params.get('gpuMode') || 'yes',
         customVram: params.get('customVram'),
         systemRam: params.get('systemRam') || '32',
-        useCase: params.get('useCase') || 'General'
+        useCase: params.get('useCase') || 'General',
+        sort: params.get('sort') || 'score'
       };
     };
 
@@ -768,6 +769,7 @@
       const customVram = document.getElementById('customVram').value;
       const systemRam = document.getElementById('systemRam').value;
       const useCase = document.getElementById('useCase').value;
+      const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'score';
 
       const params = new URLSearchParams();
       if (gpuMode) params.set('gpuMode', gpuMode);
@@ -775,6 +777,7 @@
       if (customVram) params.set('customVram', customVram);
       params.set('systemRam', systemRam);
       params.set('useCase', useCase);
+      if (sortBy && sortBy !== 'score') params.set('sort', sortBy);
 
       window.history.replaceState({}, '', `?${params.toString()}`);
     };
@@ -819,6 +822,18 @@
       if (params.has('gpu') || params.has('gpuMode') || params.has('customVram')) {
         // User opened a link with pre-filled params, auto-search
         scoreModels();
+        
+        // Apply sort from URL if specified
+        const sortParam = params.get('sort');
+        if (sortParam) {
+          setTimeout(() => {
+            const sortEl = document.getElementById('sortBy');
+            if (sortEl) {
+              sortEl.value = sortParam;
+              updateSort();
+            }
+          }, 500);
+        }
       }
     }, 100);
   </script>
