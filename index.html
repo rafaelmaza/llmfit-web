@@ -686,7 +686,12 @@
 
         <div class="info-box" style="margin-bottom: 20px;">
           <strong>📊 Understanding the Results:</strong><br>
-          <strong>Score:</strong> Overall fit for YOUR hardware (0-100). Higher = better for your specific setup.<br>
+          <strong>Score:</strong> Weighted composite (0-100) based on:<br>
+          &nbsp;&nbsp;• <strong>Quality</strong> (40-55%): Model size, quantization, task fit<br>
+          &nbsp;&nbsp;• <strong>Speed</strong> (25-35%): Estimated tok/s on YOUR hardware<br>
+          &nbsp;&nbsp;• <strong>Fit</strong> (10-15%): Memory efficiency (50-80% is ideal)<br>
+          &nbsp;&nbsp;• <strong>Context</strong> (5-10%): Context window vs use case needs<br>
+          &nbsp;&nbsp;<em>Weights vary by use case (e.g., Reasoning favors Quality, Chat favors Speed).</em><br>
           <strong>Optimization:</strong> Compression level: High Quality = less compressed, Balanced = moderate compression, Compressed = more compressed. Auto-optimized for your hardware.<br>
           <strong>Model Capability:</strong> How intelligent/capable this model is (0-100), independent of compression.<br>
           <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
