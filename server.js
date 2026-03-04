@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import http from 'http';
+import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -35,9 +35,17 @@ function getLocalIp() {
   return 'localhost';
 }
 
-// Create HTTP server
-const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+// Load SSL certificates
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+};
+
+// Create HTTPS server
+const server = https.createServer(sslOptions, (req, res) => {
+  // Strip query string from URL
+  const urlPath = req.url.split('?')[0];
+  let filePath = path.join(__dirname, urlPath === '/' ? 'index.html' : urlPath);
 
   // Security: prevent directory traversal
   if (!filePath.startsWith(__dirname)) {
@@ -50,7 +58,14 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        // File not found, try index.html
+        // For API/module requests (like /src/...), return 404 properly
+        if (urlPath.startsWith('/src/') || urlPath.endsWith('.js') || urlPath.endsWith('.json')) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Not Found');
+          return;
+        }
+        
+        // For other 404s, fallback to index.html (SPA pattern)
         fs.readFile(path.join(__dirname, 'index.html'), (err, content) => {
           if (err) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -88,10 +103,10 @@ const LOCAL_IP = getLocalIp();
 
 // Start server
 server.listen(PORT, HOST, () => {
-  console.log('\n🤖 llmfit-web server started\n');
-  console.log(`📍 Local:     http://localhost:${PORT}`);
-  console.log(`🌐 Network:   http://${LOCAL_IP}:${PORT}`);
-  console.log('\n');
+  console.log('\n🤖 llmfit-web server started (HTTPS)\n');
+  console.log(`📍 Local:     https://localhost:${PORT}`);
+  console.log(`🌐 Network:   https://${LOCAL_IP}:${PORT}`);
+  console.log('\n⚠️  Note: Self-signed certificate. Browser will warn you — ignore the warning.\n');
 });
 
 // Handle shutdown gracefully
