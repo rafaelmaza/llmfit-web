@@ -31,7 +31,7 @@ await page.goto(URL, { waitUntil: 'domcontentloaded' });
 
 // Helper: capture a frame
 let frameIdx = 0;
-async function snap(label, delayMs = 700) {
+async function snap(label, delayMs = 900) {
   await page.waitForTimeout(delayMs);
   const file = path.join(framesDir, `${String(frameIdx).padStart(3, '0')}-${label}.png`);
   await page.screenshot({ path: file, fullPage: false });
@@ -39,26 +39,28 @@ async function snap(label, delayMs = 700) {
 }
 
 // Flow
-await snap('loaded', 500);
+await snap('loaded', 700);
 
-// Select GPU / RAM / use case
+// Select GPU / RAM / use case (pause a bit between each so it reads well)
 try { await page.selectOption('#gpuModel', { label: 'RTX 4090' }); } catch {}
-await snap('gpu');
+await snap('gpu', 900);
 try { await page.selectOption('#systemRam', '32'); } catch {}
-await snap('ram');
+await snap('ram', 900);
 try { await page.selectOption('#useCase', 'Coding'); } catch {}
-await snap('usecase');
+await snap('usecase', 900);
 
 // Submit
 await page.getByText('Find Models', { exact: true }).click();
-await snap('loading', 600);
-await snap('results', 1800);
+await snap('loading', 900);
+await snap('results', 2500);
 
-// Scroll results
-await page.mouse.wheel(0, 900);
-await snap('scroll1', 700);
-await page.mouse.wheel(0, 900);
-await snap('scroll2', 700);
+// Scroll results slowly (smaller steps, more frames)
+await page.mouse.wheel(0, 450);
+await snap('scroll1', 900);
+await page.mouse.wheel(0, 450);
+await snap('scroll2', 900);
+await page.mouse.wheel(0, 450);
+await snap('scroll3', 900);
 
 await context.close();
 await browser.close();
@@ -70,8 +72,8 @@ const files = (await fs.readdir(framesDir))
 
 const encoder = GIFEncoder();
 
-// 12 fps-ish
-const delay = 85; // ms
+// ~8 fps (slower, easier to follow)
+const delay = 120; // ms
 
 for (const f of files) {
   const buf = await fs.readFile(path.join(framesDir, f));
