@@ -3,16 +3,14 @@
   "version": "0.1.0",
   "description": "Web interface for llmfit — find what LLM runs on your hardware",
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/scoring.js",
   "scripts": {
     "test": "node --test test/**/*.test.js",
     "test:unit": "node --test test/scoring.test.js",
     "test:integration": "node test/integration.test.js",
-    "demo": "node examples/demo.js",
     "dev": "python3 -m http.server 8000 --directory .",
     "server": "node server.js",
-    "start": "node server.js",
-    "build": "echo 'Build not yet implemented'"
+    "start": "node server.js"
   },
   "keywords": [
     "llm",
@@ -21,7 +19,15 @@
     "gpu",
     "inference"
   ],
-  "author": "rafael",
+  "author": "Contributor",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafaelmaza/llmfit-web.git"
+  },
+  "homepage": "https://rafaelmaza.github.io/llmfit-web/",
+  "bugs": {
+    "url": "https://github.com/rafaelmaza/llmfit-web/issues"
+  },
   "devDependencies": {}
 }
