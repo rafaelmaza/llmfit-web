@@ -441,6 +441,35 @@
         </div>
 
         <div class="form-group">
+          <label for="minContext" style="font-weight: 700; margin-bottom: 8px; display: block;">Minimum context window</label>
+          <select id="minContext" onchange="updateUrlParams();">
+            <option value="">Any</option>
+            <option value="2048">2K</option>
+            <option value="4096">4K</option>
+            <option value="8192">8K</option>
+            <option value="16384">16K</option>
+            <option value="32768">32K</option>
+            <option value="65536">64K</option>
+            <option value="131072">128K</option>
+            <option value="200000">200K</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="minTps" style="font-weight: 700; margin-bottom: 8px; display: block;">Minimum tokens/sec</label>
+          <select id="minTps" onchange="updateUrlParams();">
+            <option value="">Any</option>
+            <option value="5">5 tok/s</option>
+            <option value="10">10 tok/s</option>
+            <option value="20">20 tok/s</option>
+            <option value="30">30 tok/s</option>
+            <option value="50">50 tok/s</option>
+            <option value="100">100 tok/s</option>
+          </select>
+          <small style="color: #999; margin-top: 8px; display: block;">Estimated speed varies by runtime/settings; treat as a heuristic.</small>
+        </div>
+
+        <div class="form-group">
           <label style="font-weight: 700; margin-bottom: 12px; display: block;">Run Mode Filter</label>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <label id="filterGPULabel" style="display: flex; align-items: center; font-weight: 500; cursor: pointer;">
@@ -472,7 +501,7 @@
 
   <script type="module">
     // Cache-busting query strings help GitHub Pages clients pick up updates promptly.
-    import { scoreModels as scoreModelsCore, filterByRunMode, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260304-2340';
+    import { scoreModels as scoreModelsCore, filterByRunMode, filterByRequirements, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260304-2340';
     import { getAllModels } from './src/models.js?v=20260304-2340';
     import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260304-2340';
 
@@ -653,7 +682,16 @@
           cpuOnly: document.getElementById('filterCPUOnly').checked,
         };
 
-        const filtered = filterByRunMode(scored, filters);
+        const filteredByMode = filterByRunMode(scored, filters);
+
+        // Apply requirement filters (context + min tok/s)
+        const minContextRaw = document.getElementById('minContext').value;
+        const minTpsRaw = document.getElementById('minTps').value;
+        const req = {
+          minContext: minContextRaw ? Number(minContextRaw) : null,
+          minTps: minTpsRaw ? Number(minTpsRaw) : null,
+        };
+        const filtered = filterByRequirements(filteredByMode, req);
 
         // Render results with default sort
         window.currentSortBy = 'score';
@@ -868,6 +906,9 @@
       const systemRam = document.getElementById('systemRam').value;
       const useCase = document.getElementById('useCase').value;
       const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'score';
+
+      const minContext = document.getElementById('minContext').value;
+      const minTps = document.getElementById('minTps').value;
       
       // Get run mode filter state
       const filterGPU = document.getElementById('filterGPU').checked;
@@ -881,6 +922,8 @@
       if (customVram) params.set('customVram', customVram);
       params.set('systemRam', systemRam);
       params.set('useCase', useCase);
+      if (minContext) params.set('minContext', minContext);
+      if (minTps) params.set('minTps', minTps);
       if (sortBy && sortBy !== 'score') params.set('sort', sortBy);
       
       // Add run mode filters to URL (only if not all checked)
@@ -923,6 +966,14 @@
       // Set use case
       if (params.useCase) {
         document.getElementById('useCase').value = params.useCase;
+      }
+
+      // Min requirements
+      if (params.minContext) {
+        document.getElementById('minContext').value = params.minContext;
+      }
+      if (params.minTps) {
+        document.getElementById('minTps').value = params.minTps;
       }
 
       // Set run mode filters

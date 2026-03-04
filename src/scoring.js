@@ -368,6 +368,7 @@ export function analyzeModel(model, hardware, useCase) {
     model: model.name,
     provider: model.provider,
     paramsBillions: model.paramsBillions,
+    contextLength: model.contextLength,
     fitLevel,
     runMode,
     memoryRequiredGb: memRequired,
@@ -441,6 +442,29 @@ export function filterByRunMode(results, filters) {
     if (r.runMode === RunMode.MOE_OFFLOAD && !filters.moe) return false;
     if (r.runMode === RunMode.CPU_OFFLOAD && !filters.cpuGpu) return false;
     if (r.runMode === RunMode.CPU_ONLY && !filters.cpuOnly) return false;
+    return true;
+  });
+}
+
+/**
+ * Filter scored results by common user constraints (context + speed).
+ *
+ * @param {Array} results - scored results from scoreModels/analyzeModel
+ * @param {Object} req
+ * @param {number|null} req.minContext - minimum context window (tokens), e.g. 8192
+ * @param {number|null} req.minTps - minimum estimated tokens/sec
+ * @returns {Array}
+ */
+export function filterByRequirements(results, { minContext = null, minTps = null } = {}) {
+  return results.filter(r => {
+    if (minContext != null) {
+      const ctx = r.contextLength ?? 0;
+      if (ctx < minContext) return false;
+    }
+    if (minTps != null) {
+      const tps = r.estimatedTps ?? 0;
+      if (tps < minTps) return false;
+    }
     return true;
   });
 }

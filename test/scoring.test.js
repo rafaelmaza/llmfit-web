@@ -11,6 +11,7 @@ import {
   estimateTps,
   scoreModels,
   filterByRunMode,
+  filterByRequirements,
   RunMode,
   FitLevel,
   UseCase,
@@ -361,6 +362,25 @@ test("analyzeModel includes diskSizeGiB", () => {
   const r = analyzeModel(m, hw, UseCase.GENERAL);
   assert(typeof r.diskSizeGiB === "number", "diskSizeGiB should be a number");
   assert(r.diskSizeGiB > 0, "diskSizeGiB should be positive");
+});
+
+test("analyzeModel includes contextLength", () => {
+  const m = testModel("Llama-7B", 7, 8192);
+  const hw = testHardware(24, 64, true, "CUDA");
+  const r = analyzeModel(m, hw, UseCase.GENERAL);
+  assert.strictEqual(r.contextLength, 8192);
+});
+
+test("filterByRequirements filters by minContext and minTps", () => {
+  const results = [
+    { name: 'A', contextLength: 4096, estimatedTps: 12 },
+    { name: 'B', contextLength: 8192, estimatedTps: 8 },
+    { name: 'C', contextLength: 8192, estimatedTps: 25 },
+  ];
+
+  const filtered = filterByRequirements(results, { minContext: 8192, minTps: 10 });
+  assert.strictEqual(filtered.length, 1);
+  assert.strictEqual(filtered[0].name, 'C');
 });
 
 console.log("✅ All tests passed!");
