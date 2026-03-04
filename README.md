@@ -4,6 +4,8 @@ A web-based version of [llmfit](https://github.com/AlexsJones/llmfit) — find w
 
 **🌐 Live Demo:** https://rafaelmaza.github.io/llmfit-web/
 
+![llmfit-web demo](demo.gif)
+
 ---
 
 ## ⚠️ Project Origin
@@ -145,10 +147,21 @@ artifacts/videos/
 
 ### 3) Convert to GIF
 
+#### Option A: ffmpeg (fastest)
+
 ```bash
-sudo apt-get install -y ffmpeg
 ffmpeg -i artifacts/videos/*.webm -vf "fps=15,scale=1000:-1:flags=lanczos" -loop 0 demo.gif
 ```
+
+#### Option B: Pure JavaScript (no ffmpeg)
+
+This repo also includes a script that captures PNG frames via Playwright and encodes an animated GIF using `gifenc` + `pngjs`:
+
+```bash
+npm run generate:gif
+```
+
+This writes `demo.gif` in the repo root.
 
 ## Model Database
 
