@@ -162,6 +162,53 @@ export function estimateMemory(paramsBillions, quant) {
 }
 
 /**
+ * Estimate approximate on-disk model size (GiB).
+ *
+ * This is a heuristic intended for planning downloads/storage.
+ * It uses bytes-per-parameter for the chosen quantization and adds a small container overhead.
+ *
+ * @param {number} paramsBillions
+ * @param {string} quant
+ * @param {number} overheadPct - Container/metadata overhead (default 6%)
+ * @returns {number} Estimated disk size in GiB
+ */
+export function estimateDiskSizeGiB(paramsBillions, quant, overheadPct = 0.06) {
+  const bytesPerParam = {
+    "F32": 4.0,
+    "F16": 2.0,
+    "BF16": 2.0,
+    "Q8_0": 1.0,
+    "Q8_1": 1.0,
+    "Q7_K_M": 0.875,
+    "Q7_K_S": 0.875,
+    "Q6_K": 0.75,
+    "Q5_K_M": 0.625,
+    "Q5_K_S": 0.625,
+    "Q5_M": 0.625,
+    "Q5_0": 0.625,
+    "Q4_K_M": 0.5,
+    "Q4_K_S": 0.5,
+    "Q4_1": 0.5,
+    "Q4_0": 0.5,
+    "Q3_K_M": 0.375,
+    "Q3_K_S": 0.375,
+    "Q3_K_L": 0.375,
+    "Q3_M": 0.375,
+    "Q3_0": 0.375,
+    "Q2_K": 0.25,
+    "Q8": 1.0,
+    "Q6": 0.75,
+    "Q4": 0.5,
+    "Q2": 0.25,
+  };
+
+  const bpp = bytesPerParam[quant] || 0.5;
+  const bytes = paramsBillions * 1e9 * bpp;
+  const gib = bytes / (1024 ** 3);
+  return gib * (1 + overheadPct);
+}
+
+/**
  * Backend speed constant K (higher = faster throughput)
  */
 export const BACKEND_SPEED_CONSTANT = {

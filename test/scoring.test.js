@@ -16,6 +16,8 @@ import {
   UseCase,
 } from "../src/scoring.js";
 
+import { estimateDiskSizeGiB } from "../src/utils.js";
+
 // Helper to create test model
 function testModel(name, params, contextLength = 4096) {
   return {
@@ -343,6 +345,22 @@ test("filterByRunMode - all disabled returns empty", () => {
   const filtered = filterByRunMode(results, filters);
 
   assert.strictEqual(filtered.length, 0, "Should return no results");
+});
+
+// ──────────────── Disk Size Estimation Tests ────────────────
+
+test("estimateDiskSizeGiB - sanity check for 1B @ Q4", () => {
+  const size = estimateDiskSizeGiB(1.0, "Q4_K_M");
+  // 1B params * 0.5 bytes = 0.5e9 bytes = ~0.466 GiB, plus 6% overhead = ~0.494 GiB
+  assert(size > 0.45 && size < 0.55, `Expected ~0.49 GiB, got ${size}`);
+});
+
+test("analyzeModel includes diskSizeGiB", () => {
+  const m = testModel("Llama-7B", 7);
+  const hw = testHardware(24, 64, true, "CUDA");
+  const r = analyzeModel(m, hw, UseCase.GENERAL);
+  assert(typeof r.diskSizeGiB === "number", "diskSizeGiB should be a number");
+  assert(r.diskSizeGiB > 0, "diskSizeGiB should be positive");
 });
 
 console.log("✅ All tests passed!");

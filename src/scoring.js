@@ -9,6 +9,7 @@ import {
   getQuantQualityPenalty,
   getQuantSpeedMultiplier,
   estimateMemory,
+  estimateDiskSizeGiB,
   getBackendSpeedConstant,
   parseParams,
   inferUseCase,
@@ -360,6 +361,9 @@ export function analyzeModel(model, hardware, useCase) {
 
   const compositeScore = weightedScore(scores, useCase);
 
+  // Approx disk size (GiB) for the recommended quant
+  const diskSizeGiB = estimateDiskSizeGiB(model.paramsBillions, bestQuant);
+
   return {
     model: model.name,
     provider: model.provider,
@@ -370,6 +374,7 @@ export function analyzeModel(model, hardware, useCase) {
     memoryAvailableGb: memAvailable,
     utilizationPct: utilization,
     estimatedTps: tps,
+    diskSizeGiB,
     bestQuant,
     useCase,
     runtime,

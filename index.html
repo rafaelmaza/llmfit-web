@@ -732,7 +732,8 @@
           <strong>Optimization:</strong> Compression level: High Quality = less compressed, Balanced = moderate compression, Compressed = more compressed. Auto-optimized for your hardware.<br>
           <strong>Model Capability:</strong> How intelligent/capable this model is (0-100), independent of compression.<br>
           <strong>Speed:</strong> Estimated tokens/sec on your hardware.<br>
-          <strong>Memory:</strong> Percentage of your VRAM the model uses.
+          <strong>Memory:</strong> Percentage of your VRAM the model uses.<br>
+          <strong>Disk:</strong> Approximate download/storage size for the recommended quantization (heuristic; may vary by format/repo).
         </div>
       `;
 
@@ -768,6 +769,10 @@
                 <div class="detail-item">
                   <div class="detail-label">Memory</div>
                   <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label" title="Approximate on-disk size for the recommended quantization">Disk</div>
+                  <div class="detail-value">~${r.diskSizeGiB.toFixed(1)} GiB</div>
                 </div>
                 <div class="detail-item">
                   <div class="detail-label" title="How the model data is compressed for your hardware">Optimization</div>
