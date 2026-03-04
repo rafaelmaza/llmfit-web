@@ -486,6 +486,16 @@
       return labels[runMode] || runMode;
     }
 
+    // Format disk size for display (avoid confusing 0.0 for small models)
+    function formatDiskSize(diskSizeGiB) {
+      if (!isFinite(diskSizeGiB) || diskSizeGiB <= 0) return '—';
+      if (diskSizeGiB < 0.1) {
+        const mib = diskSizeGiB * 1024;
+        return `~${Math.round(mib)} MiB`;
+      }
+      return `~${diskSizeGiB.toFixed(1)} GiB`;
+    }
+
     // Organize GPUs by manufacturer
     function groupGpusByManufacturer() {
       const gpus = getAvailableGpus();
@@ -772,7 +782,7 @@
                 </div>
                 <div class="detail-item">
                   <div class="detail-label" title="Approximate on-disk size for the recommended quantization">Disk</div>
-                  <div class="detail-value">~${r.diskSizeGiB.toFixed(1)} GiB</div>
+                  <div class="detail-value">${formatDiskSize(r.diskSizeGiB)}</div>
                 </div>
                 <div class="detail-item">
                   <div class="detail-label" title="How the model data is compressed for your hardware">Optimization</div>
