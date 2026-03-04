@@ -145,17 +145,9 @@ The video will be saved under:
 artifacts/videos/
 ```
 
-### 3) Convert to GIF
+### 3) Generate the GIF (easy)
 
-#### Option A: ffmpeg (fastest)
-
-```bash
-ffmpeg -i artifacts/videos/*.webm -vf "fps=15,scale=1000:-1:flags=lanczos" -loop 0 demo.gif
-```
-
-#### Option B: Pure JavaScript (no ffmpeg)
-
-This repo also includes a script that captures PNG frames via Playwright and encodes an animated GIF using `gifenc` + `pngjs`:
+This repo includes a script that captures PNG frames via Playwright and encodes an animated GIF using `gifenc` + `pngjs`:
 
 ```bash
 npm run generate:gif
