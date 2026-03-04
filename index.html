@@ -471,9 +471,10 @@
   </div>
 
   <script type="module">
-    import { scoreModels as scoreModelsCore, filterByRunMode, UseCase, FitLevel, RunMode } from './src/scoring.js';
-    import { getAllModels } from './src/models.js';
-    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js';
+    // Cache-busting query strings help GitHub Pages clients pick up updates promptly.
+    import { scoreModels as scoreModelsCore, filterByRunMode, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260304-2340';
+    import { getAllModels } from './src/models.js?v=20260304-2340';
+    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260304-2340';
 
     // Format RunMode enum for display
     function formatRunMode(runMode) {
