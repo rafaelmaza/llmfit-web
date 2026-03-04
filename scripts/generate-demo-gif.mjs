@@ -14,7 +14,7 @@ import gifencPkg from 'gifenc';
 const { GIFEncoder, quantize, applyPalette } = gifencPkg;
 import { PNG } from 'pngjs';
 
-const URL = process.env.URL ?? 'http://localhost:8000';
+const URL = process.env.URL ?? 'https://rafaelmaza.github.io/llmfit-web/';
 const outGif = path.resolve('demo.gif');
 const framesDir = path.resolve('artifacts/gif-frames');
 
@@ -47,35 +47,53 @@ async function snap(label, waitMs = 1200, gifDelayMs = 1400) {
 await snap('loaded', 800, 1800);
 
 // Prep the search (make changes people can follow)
-try { await page.selectOption('#gpuModel', { label: 'RTX 4090' }); } catch {}
-await snap('gpu-selected', 900, 1800);
+// Make sure the form is on-screen
+await page.locator('#gpuModel').scrollIntoViewIfNeeded();
+await snap('form-visible', 300, 900);
+
+// Choose GPU (dropdown is populated dynamically)
+await page.waitForFunction(() => {
+  const el = document.querySelector('#gpuModel');
+  return el && el.options && el.options.length > 10;
+});
+await page.selectOption('#gpuModel', { label: 'RTX 4090' });
+await snap('gpu-selected', 700, 1800);
 
 // Play with RAM a bit
-try { await page.selectOption('#systemRam', '32'); } catch {}
-await snap('ram-32', 700, 1400);
-try { await page.selectOption('#systemRam', '64'); } catch {}
-await snap('ram-64', 900, 1800);
-try { await page.selectOption('#systemRam', '32'); } catch {}
-await snap('ram-back-32', 900, 1800);
+await page.selectOption('#systemRam', '32');
+await snap('ram-32', 500, 1400);
+await page.selectOption('#systemRam', '64');
+await snap('ram-64', 700, 1800);
+await page.selectOption('#systemRam', '32');
+await snap('ram-back-32', 700, 1800);
 
 // Purpose / use case (ensure dropdown is visible)
-try { await page.locator('#useCase').scrollIntoViewIfNeeded(); } catch {}
-await snap('usecase-visible', 400, 1200);
-try { await page.selectOption('#useCase', 'General'); } catch {}
-await snap('usecase-general', 800, 1800);
-try { await page.selectOption('#useCase', 'Coding'); } catch {}
-await snap('usecase-coding', 900, 2000);
+await page.locator('#useCase').scrollIntoViewIfNeeded();
+await snap('usecase-visible', 300, 900);
+await page.selectOption('#useCase', 'General');
+await snap('usecase-general', 600, 1800);
+await page.selectOption('#useCase', 'Coding');
+await snap('usecase-coding', 700, 2000);
 
-// Untick a checkbox (e.g., hide MoE) (ensure checkbox visible too)
-try { await page.locator('#filterMoE').scrollIntoViewIfNeeded(); } catch {}
-await snap('filters-visible', 400, 1200);
-try { await page.click('#filterMoE'); } catch {}
-await snap('filter-moe-off', 900, 2200);
+// Min context and min tok/s (use new fields)
+await page.locator('#minContext').scrollIntoViewIfNeeded();
+await snap('requirements-visible', 300, 900);
+await page.selectOption('#minContext', '8192');
+await snap('minctx-8k', 600, 1800);
+await page.selectOption('#minTps', '10');
+await snap('mintps-10', 600, 1800);
+
+// Untick a checkbox (e.g., hide MoE)
+await page.locator('#filterMoE').scrollIntoViewIfNeeded();
+await snap('filters-visible', 300, 900);
+await page.click('#filterMoE');
+await snap('filter-moe-off', 700, 2200);
 
 // Submit
-await page.getByText('Find Models', { exact: true }).click();
-await snap('loading', 700, 1200);
-await snap('results-top', 2600, 2200);
+await page.locator('button', { hasText: 'Find Models' }).click();
+// Wait until results are shown (safer than a blind sleep)
+await page.waitForSelector('#resultsPanel', { state: 'visible', timeout: 15000 });
+await snap('results-top', 1200, 2600);
 
 // Scroll to results and move slowly so text is readable
 for (let i = 1; i <= 6; i++) {
