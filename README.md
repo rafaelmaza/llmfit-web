@@ -2,48 +2,52 @@
 
 A web-based version of [llmfit](https://github.com/AlexsJones/llmfit) — find what LLM models run on your hardware, right in your browser.
 
+**🌐 Live Demo:** https://rafaelmaza.github.io/llmfit-web/
+
+---
+
+## ⚠️ Project Origin
+
+**This repository was AI-generated** as a web port of the original [llmfit](https://github.com/AlexsJones/llmfit) Rust CLI tool.
+
+**All credit for the core algorithm, scoring logic, and conceptual design goes to [AlexsJones](https://github.com/AlexsJones)**, the creator of llmfit.
+
+This project reimplements the llmfit scoring engine in JavaScript to make it accessible via a web interface. The original Rust implementation remains the authoritative reference.
+
+---
+
 ## Overview
 
 **llmfit-web** brings the model-scoring engine from the original Rust CLI tool to the web, allowing anyone to input their hardware specs and get instant recommendations for which LLM models will run well.
 
-### What It Does
+### Features
 
-- **Hardware detection form** — Users enter their GPU model, RAM, and intended use case
-- **Multi-dimensional scoring** — Scores models across Quality, Speed, Fit, and Context dimensions
-- **Intelligent recommendations** — Ranks 200+ open-source models by fit and performance
-- **No backend needed** — Everything runs in the browser (pure JavaScript)
+- **50+ GPU models** — NVIDIA RTX/A-series, AMD RDNA/MI-series, Intel Arc, Apple Silicon
+- **206 LLM models** — From 812K to 753B parameters, including MoE architectures
+- **Multi-dimensional scoring** — Quality, Speed, Fit, and Context analysis
+- **Smart quantization** — GGUF and MLX quantization hierarchies with automatic optimization
+- **Real-time ranking** — Instant results, no backend needed
+- **Mobile responsive** — Works on phones, tablets, and desktops
 
-## Project Structure
+## How It Works
 
-```
-llmfit-web/
-├── src/
-│   ├── scoring.js      # Core multi-dimensional scoring engine
-│   ├── gpus.js         # GPU lookup table (NVIDIA, AMD, Apple, Intel)
-│   ├── utils.js        # Quantization hierarchy, speed calculations
-│   └── models.js       # Model database (to be created)
-├── test/
-│   └── scoring.test.js # Comprehensive unit tests (23 passing)
-├── index.html          # Web UI (placeholder)
-├── package.json        # Dependencies
-└── README.md           # This file
-```
+1. **Select your GPU** (or enter custom VRAM)
+2. **Choose your system RAM** (8GB to 128GB)
+3. **Pick your use case** (Coding, Reasoning, Chat, Multimodal, etc.)
+4. **Get ranked recommendations** — Top models scored by fit, speed, and quality
 
-## Scoring Algorithm
+The scoring engine analyzes:
 
-Based on the original llmfit Rust codebase, the scoring engine:
-
-1. **Analyzes memory fit**: Determines if a model fits in VRAM, needs CPU offloading, or uses expert offloading (MoE)
-2. **Estimates speed**: Calculates tokens/sec based on backend (CUDA, ROCm, Metal, CPU) and quantization
-3. **Computes quality**: Factor in parameter count, model family, quantization penalty, and task alignment
-4. **Evaluates context**: Scores context window availability vs. use-case needs
-5. **Weights by use case**: Different weights for Coding, Reasoning, Chat, etc.
+- **Memory fit** — Does it fit in VRAM, need CPU offload, or use MoE expert offloading?
+- **Speed** — Tokens/sec based on backend (CUDA, ROCm, Metal, CPU) and quantization
+- **Quality** — Parameter count, model family, quantization penalty, task alignment
+- **Context** — Context window availability vs. use-case requirements
 
 ### Run Modes
 
 - **GPU** — Model fully loaded into VRAM (fastest)
 - **MoE Offload** — Active experts in VRAM, inactive experts in system RAM
-- **CPU Offload** — Partial GPU offload, model spills to system RAM
+- **CPU Offload** — Partial GPU, model spills to system RAM
 - **CPU Only** — Entire model in system RAM (slowest)
 
 ### Fit Levels
@@ -53,85 +57,110 @@ Based on the original llmfit Rust codebase, the scoring engine:
 - **Marginal** — Tight fit or CPU-only
 - **Too Tight** — Does not fit
 
+## Project Structure
+
+```
+llmfit-web/
+├── src/
+│   ├── scoring.js      # Core multi-dimensional scoring engine
+│   ├── gpus.js         # GPU lookup table (NVIDIA, AMD, Apple, Intel)
+│   ├── utils.js        # Quantization hierarchy, speed calculations
+│   └── models.js       # Model database (206 models)
+├── test/
+│   └── scoring.test.js # Unit + integration tests (30 passing)
+├── index.html          # Web UI (production-ready)
+├── server.js           # Local dev server (Node.js)
+├── package.json        # Dependencies
+└── README.md           # This file
+```
+
+## Running Locally
+
+**Start the dev server:**
+
+```bash
+npm start
+```
+
+Then visit:
+- **Local:** http://localhost:8000
+- **Network:** http://<your-ip>:8000
+
+Or open `index.html` directly in a browser (works without a server).
+
 ## Testing
 
-Run the unit test suite:
+Run the test suite:
 
 ```bash
-node --test test/scoring.test.js
+npm test
 ```
 
-**Current: 23/23 tests passing** ✅
+**Current: 30/30 tests passing** ✅
 
-Key tests:
-- Memory fit scoring
-- Speed penalties by run mode
-- Quality scoring by parameter count and quantization
-- Use-case-specific weighting
-- Real-world hardware scenarios (RTX 4090, 8GB GPU, CPU-only, Apple Silicon)
+- 23 unit tests (scoring engine, memory fit, speed, quality)
+- 7 integration tests (real-world hardware + model combinations)
 
-## Checkpoint 1 Deliverables ✅
+## Deployment
 
-- [x] JavaScript scoring engine (fully ported from Rust)
-- [x] GPU lookup table (50+ models)
-- [x] Quantization hierarchy and speed calculations
-- [x] Multi-dimensional scoring functions
-- [x] Comprehensive unit tests (23 passing)
-- [x] Git repo initialized
+This project is **static HTML + JavaScript** — no backend, no build step, no dependencies.
 
-## Checkpoint 2 Deliverables ✅
+Deploy anywhere:
+- **GitHub Pages** (built-in)
+- **Netlify / Vercel** (drag-and-drop)
+- **Cloudflare Pages**
+- **S3 + CloudFront**
+- Or just serve the files from any web server
 
-- [x] Model database: 206 models embedded in JavaScript
-  - 31 tiny models (<1B)
-  - 44 small models (1-7B)
-  - 66 medium models (7-20B)
-  - 37 large models (20-70B)
-  - 28 XLarge models (70B+)
-  - 33 MoE (Mixture of Experts) models
+## Model Database
 
-- [x] Model query API:
-  - `getAllModels()` — full list
-  - `searchModels(query)` — by name/provider
-  - `getModelsByUseCase()` — by use case
-  - `getMoEModels()` — only MoE models
-  - `getTopModels(n)` — top N by parameters
-  - `getModelStats()` — database statistics
+206 open-source models included:
 
-- [x] Integration tests (7 tests, all passing):
-  - Llama models on RTX 4090
-  - StarCoder on 8GB GPU
-  - Top 5 recommendations for 24GB setup
-  - MoE models on 80GB A100
-  - CPU-only inference
-  - Hardware tier comparison
-  - Use-case-specific recommendations
+| Category | Count | Parameter Range |
+|----------|-------|-----------------|
+| Tiny     | 31    | <1B             |
+| Small    | 44    | 1-7B            |
+| Medium   | 66    | 7-20B           |
+| Large    | 37    | 20-70B          |
+| XLarge   | 28    | 70B+            |
+| MoE      | 33    | Mixture of Experts |
 
-## Next Checkpoints
+**Source:** Extracted from HuggingFace via the original llmfit project.
 
-### Checkpoint 3: Web UI
-- Extract 206 models from original llmfit
-- Import `hf_models.json`
-- Create models.js with model data structure
+## API (for developers)
 
-### Checkpoint 3: Web UI
-- Input form: GPU dropdown, system RAM, use case
-- Results table: sortable, filterable, detailed view
-- GitHub Pages deployment
+Use the scoring engine programmatically:
 
-## Development
+```javascript
+import { scoreModels, UseCase } from './src/scoring.js';
+import { getAllModels } from './src/models.js';
 
-Start a local dev server:
+const hardware = {
+  gpuVramGB: 24,
+  systemRamGB: 64,
+  backend: 'CUDA'
+};
 
-```bash
-npm run dev
+const useCase = UseCase.Coding;
+
+const results = scoreModels(getAllModels(), hardware, useCase);
+console.log(results.slice(0, 5)); // Top 5 models
 ```
-
-Then visit `http://localhost:8000`
-
-## License
-
-MIT (matching the original llmfit project)
 
 ## Credits
 
-Inspired by [llmfit](https://github.com/AlexsJones/llmfit) by [AlexsJones](https://github.com/AlexsJones)
+**Original Project:** [llmfit](https://github.com/AlexsJones/llmfit) by [AlexsJones](https://github.com/AlexsJones)
+
+This web port was AI-generated and released under the same license as the original project.
+
+## License
+
+MIT License (matching the original llmfit project)
+
+---
+
+## Contributing
+
+Issues and PRs welcome! If you find a bug or have a feature request, please open an issue.
+
+For major changes to the scoring algorithm, consider contributing to the [original llmfit project](https://github.com/AlexsJones/llmfit) first.
