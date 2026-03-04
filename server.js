@@ -88,7 +88,7 @@ const LOCAL_IP = getLocalIp();
 
 // Start server
 server.listen(PORT, HOST, () => {
-  console.log('\n🧦 llmfit-web server started\n');
+  console.log('\n🤖 llmfit-web server started\n');
   console.log(`📍 Local:     http://localhost:${PORT}`);
   console.log(`🌐 Network:   http://${LOCAL_IP}:${PORT}`);
   console.log('\n');
