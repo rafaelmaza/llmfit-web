@@ -21,7 +21,7 @@ const framesDir = path.resolve('artifacts/gif-frames');
 await fs.mkdir(framesDir, { recursive: true });
 
 const width = 900;
-const height = 560;
+const height = 650;
 
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width, height } });
@@ -58,15 +58,19 @@ await snap('ram-64', 900, 1800);
 try { await page.selectOption('#systemRam', '32'); } catch {}
 await snap('ram-back-32', 900, 1800);
 
-// Purpose / use case
+// Purpose / use case (ensure dropdown is visible)
+try { await page.locator('#useCase').scrollIntoViewIfNeeded(); } catch {}
+await snap('usecase-visible', 400, 1200);
 try { await page.selectOption('#useCase', 'General'); } catch {}
-await snap('usecase-general', 800, 1600);
+await snap('usecase-general', 800, 1800);
 try { await page.selectOption('#useCase', 'Coding'); } catch {}
-await snap('usecase-coding', 900, 1800);
+await snap('usecase-coding', 900, 2000);
 
-// Untick a checkbox (e.g., hide MoE)
+// Untick a checkbox (e.g., hide MoE) (ensure checkbox visible too)
+try { await page.locator('#filterMoE').scrollIntoViewIfNeeded(); } catch {}
+await snap('filters-visible', 400, 1200);
 try { await page.click('#filterMoE'); } catch {}
-await snap('filter-moe-off', 900, 2000);
+await snap('filter-moe-off', 900, 2200);
 
 // Submit
 await page.getByText('Find Models', { exact: true }).click();
