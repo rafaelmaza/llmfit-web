@@ -103,7 +103,7 @@ npm test
 
 ## Deployment
 
-This project is **static HTML + JavaScript** — no backend, no build step, no dependencies.
+This project is **static HTML + JavaScript** — no backend, no build step, no runtime dependencies.
 
 Deploy anywhere:
 - **GitHub Pages** (built-in)
@@ -111,6 +111,44 @@ Deploy anywhere:
 - **Cloudflare Pages**
 - **S3 + CloudFront**
 - Or just serve the files from any web server
+
+## Recording a Demo GIF (optional)
+
+If you want a short GIF for the README, the repo includes a Playwright script that drives a headed Chromium session and records a demo video.
+
+### 1) Install dev deps
+
+```bash
+npm install
+```
+
+### 2) Record (headed)
+
+Local machine with a GUI:
+
+```bash
+npm run record:demo
+```
+
+Headless Linux server (uses a virtual display):
+
+```bash
+sudo apt-get install -y xvfb
+xvfb-run -a npm run record:demo
+```
+
+The video will be saved under:
+
+```
+artifacts/videos/
+```
+
+### 3) Convert to GIF
+
+```bash
+sudo apt-get install -y ffmpeg
+ffmpeg -i artifacts/videos/*.webm -vf "fps=15,scale=1000:-1:flags=lanczos" -loop 0 demo.gif
+```
 
 ## Model Database
 

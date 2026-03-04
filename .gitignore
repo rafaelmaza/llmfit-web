@@ -10,3 +10,7 @@ yarn-error.log*
 .env.local
 .cache/
 .parcel-cache/
+
+# Playwright / recording artifacts
+artifacts/
+

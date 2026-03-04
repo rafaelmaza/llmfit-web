@@ -10,7 +10,8 @@
     "test:integration": "node test/integration.test.js",
     "dev": "python3 -m http.server 8000 --directory .",
     "server": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "record:demo": "node scripts/record-demo.mjs"
   },
   "keywords": [
     "llm",
@@ -29,5 +30,7 @@
   "bugs": {
     "url": "https://github.com/rafaelmaza/llmfit-web/issues"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
 }
