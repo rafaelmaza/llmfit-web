@@ -423,3 +423,19 @@ export function scoreModels(models, hardware, useCase) {
 
   return results;
 }
+
+/**
+ * Filter scored results by run mode
+ * @param {Array} results - Array of scored model results
+ * @param {Object} filters - Filter options { gpu, moe, cpuGpu, cpuOnly }
+ * @returns {Array} Filtered results
+ */
+export function filterByRunMode(results, filters) {
+  return results.filter(r => {
+    if (r.runMode === RunMode.GPU && !filters.gpu) return false;
+    if (r.runMode === RunMode.MOE_OFFLOAD && !filters.moe) return false;
+    if (r.runMode === RunMode.CPU_OFFLOAD && !filters.cpuGpu) return false;
+    if (r.runMode === RunMode.CPU_ONLY && !filters.cpuOnly) return false;
+    return true;
+  });
+}

@@ -442,7 +442,7 @@
   </div>
 
   <script type="module">
-    import { scoreModels as scoreModelsCore, UseCase, FitLevel, RunMode } from './src/scoring.js';
+    import { scoreModels as scoreModelsCore, filterByRunMode, UseCase, FitLevel, RunMode } from './src/scoring.js';
     import { getAllModels } from './src/models.js';
     import { getGpuSpecs, getAvailableGpus } from './src/gpus.js';
 
@@ -598,18 +598,14 @@
         const scored = scoreModelsCore(allModels, hardware, useCase);
 
         // Apply run mode filter
-        const filterGPU = document.getElementById('filterGPU').checked;
-        const filterMoE = document.getElementById('filterMoE').checked;
-        const filterCPUGPU = document.getElementById('filterCPUGPU').checked;
-        const filterCPUOnly = document.getElementById('filterCPUOnly').checked;
+        const filters = {
+          gpu: document.getElementById('filterGPU').checked,
+          moe: document.getElementById('filterMoE').checked,
+          cpuGpu: document.getElementById('filterCPUGPU').checked,
+          cpuOnly: document.getElementById('filterCPUOnly').checked,
+        };
 
-        const filtered = scored.filter(r => {
-          if (r.runMode === 'GPU' && !filterGPU) return false;
-          if (r.runMode === 'MOE_OFFLOAD' && !filterMoE) return false;
-          if (r.runMode === 'CPU_OFFLOAD' && !filterCPUGPU) return false;
-          if (r.runMode === 'CPU_ONLY' && !filterCPUOnly) return false;
-          return true;
-        });
+        const filtered = filterByRunMode(scored, filters);
 
         // Render results with default sort
         window.currentSortBy = 'score';

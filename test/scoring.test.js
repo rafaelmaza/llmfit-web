@@ -10,6 +10,7 @@ import {
   qualityScore,
   estimateTps,
   scoreModels,
+  filterByRunMode,
   RunMode,
   FitLevel,
   UseCase,
@@ -283,6 +284,65 @@ test("scoreModels - Coding use case boosts code models", () => {
 
   // Code model should score higher on Coding use case
   assert(codeScore > generalScore, "Code model should score higher for Coding");
+});
+
+// ──────────────── Run Mode Filter Tests ────────────────
+
+test("filterByRunMode - all enabled shows all results", () => {
+  const results = [
+    { runMode: RunMode.GPU, name: "Model A" },
+    { runMode: RunMode.MOE_OFFLOAD, name: "Model B" },
+    { runMode: RunMode.CPU_OFFLOAD, name: "Model C" },
+    { runMode: RunMode.CPU_ONLY, name: "Model D" },
+  ];
+
+  const filters = { gpu: true, moe: true, cpuGpu: true, cpuOnly: true };
+  const filtered = filterByRunMode(results, filters);
+
+  assert.strictEqual(filtered.length, 4, "Should return all 4 results");
+});
+
+test("filterByRunMode - GPU only", () => {
+  const results = [
+    { runMode: RunMode.GPU, name: "Model A" },
+    { runMode: RunMode.MOE_OFFLOAD, name: "Model B" },
+    { runMode: RunMode.CPU_OFFLOAD, name: "Model C" },
+    { runMode: RunMode.CPU_ONLY, name: "Model D" },
+  ];
+
+  const filters = { gpu: true, moe: false, cpuGpu: false, cpuOnly: false };
+  const filtered = filterByRunMode(results, filters);
+
+  assert.strictEqual(filtered.length, 1, "Should return 1 GPU model");
+  assert.strictEqual(filtered[0].runMode, RunMode.GPU);
+});
+
+test("filterByRunMode - no CPU offload (GPU + MoE only)", () => {
+  const results = [
+    { runMode: RunMode.GPU, name: "Model A" },
+    { runMode: RunMode.MOE_OFFLOAD, name: "Model B" },
+    { runMode: RunMode.CPU_OFFLOAD, name: "Model C" },
+    { runMode: RunMode.CPU_ONLY, name: "Model D" },
+  ];
+
+  const filters = { gpu: true, moe: true, cpuGpu: false, cpuOnly: false };
+  const filtered = filterByRunMode(results, filters);
+
+  assert.strictEqual(filtered.length, 2, "Should return GPU + MoE models");
+  assert.strictEqual(filtered[0].runMode, RunMode.GPU);
+  assert.strictEqual(filtered[1].runMode, RunMode.MOE_OFFLOAD);
+});
+
+test("filterByRunMode - all disabled returns empty", () => {
+  const results = [
+    { runMode: RunMode.GPU, name: "Model A" },
+    { runMode: RunMode.MOE_OFFLOAD, name: "Model B" },
+  ];
+
+  const filters = { gpu: false, moe: false, cpuGpu: false, cpuOnly: false };
+  const filtered = filterByRunMode(results, filters);
+
+  assert.strictEqual(filtered.length, 0, "Should return no results");
 });
 
 console.log("✅ All tests passed!");
