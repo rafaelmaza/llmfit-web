@@ -419,18 +419,14 @@
 
         <div class="form-group">
           <label for="systemRam">System RAM (GB)</label>
-          <div style="display: flex; gap: 8px; align-items: flex-end;">
-            <select id="systemRam" onchange="updateUrlParams();" style="flex: 1;">
-              <option value="8">8 GB</option>
-              <option value="16">16 GB</option>
-              <option value="24">24 GB</option>
-              <option value="32" selected>32 GB</option>
-              <option value="64">64 GB</option>
-              <option value="128">128 GB</option>
-            </select>
-            <button type="button" id="autoDetectBtn" onclick="autoDetectHardware();" style="padding: 12px 16px; width: auto; white-space: nowrap; font-size: 0.9em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">🔍 Auto-detect</button>
-          </div>
-          <small style="color: #999; margin-top: 5px; display: block;">Auto-detect reads your device's actual specs</small>
+          <select id="systemRam" onchange="updateUrlParams();">
+            <option value="8">8 GB</option>
+            <option value="16">16 GB</option>
+            <option value="24">24 GB</option>
+            <option value="32" selected>32 GB</option>
+            <option value="64">64 GB</option>
+            <option value="128">128 GB</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -506,9 +502,9 @@
 
   <script type="module">
     // Cache-busting query strings help GitHub Pages clients pick up updates promptly.
-    import { scoreModels as scoreModelsCore, filterByRunMode, filterByRequirements, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260305-0005';
-    import { getAllModels } from './src/models.js?v=20260305-0005';
-    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260305-0005';
+    import { scoreModels as scoreModelsCore, filterByRunMode, filterByRequirements, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260305-0400';
+    import { getAllModels } from './src/models.js?v=20260305-0400';
+    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260305-0400';
 
     // Format RunMode enum for display
     function formatRunMode(runMode) {
@@ -542,7 +538,11 @@
       };
 
       gpus.forEach(gpu => {
-        if (gpu.includes('RTX') || gpu.includes('A100') || gpu.includes('A6000') || gpu.includes('A5000') || gpu.includes('A4000') || gpu.includes('A2000') || gpu.includes('T4') || gpu.includes('V100') || gpu.includes('P100')) {
+        // NVIDIA: RTX, GTX, H-series, A-series, L-series, Tesla
+        if (gpu.includes('RTX') || gpu.includes('GTX') || gpu.includes('H100') || gpu.includes('H200') || 
+            gpu.includes('A100') || gpu.includes('A10') || gpu.includes('A6000') || gpu.includes('A5000') || 
+            gpu.includes('A4000') || gpu.includes('A2000') || gpu.includes('L40') || gpu.includes('L4') ||
+            gpu.includes('T4') || gpu.includes('V100') || gpu.includes('P100')) {
           groups['NVIDIA'].push(gpu);
         } else if (gpu.includes('RX') || gpu.includes('MI')) {
           groups['AMD'].push(gpu);
@@ -614,33 +614,7 @@
       document.getElementById('cpuOnlyFilterMessage').style.display = showGpuFilters ? 'none' : 'block';
     }
 
-    // Auto-detect hardware
-    window.autoDetectHardware = async function() {
-      const btn = document.getElementById('autoDetectBtn');
-      const originalText = btn.textContent;
-      btn.textContent = '⏳ Detecting...';
-      btn.disabled = true;
-
-      try {
-        // Detect system RAM using Device Memory API
-        if (navigator.deviceMemory) {
-          const ramGb = navigator.deviceMemory;
-          // Find the closest RAM option
-          const ramOptions = [8, 16, 24, 32, 64, 128];
-          let bestMatch = 32; // default
-          let minDiff = Math.abs(32 - ramGb);
-          
-          ramOptions.forEach(opt => {
-            const diff = Math.abs(opt - ramGb);
-            if (diff < minDiff) {
-              minDiff = diff;
-              bestMatch = opt;
-            }
-          });
-          
-          document.getElementById('systemRam').value = bestMatch;
-          
-          // Show success message\n          showNotification(`✅ Detected ${ramGb}GB RAM → selected ${bestMatch}GB option`);\n        } else {\n          showNotification('⚠️ Device Memory API not supported. Using default.');\n        }\n\n        // Detect GPU using WebGPU (if available)\n        let gpuDetected = false;\n        if (navigator.gpu) {\n          try {\n            const adapter = await navigator.gpu.requestAdapter();\n            if (adapter) {\n              // Set to CPU+GPU mode since we detected a GPU\n              document.querySelector('input[name=\"gpuMode\"][value=\"yes\"]').checked = true;\n              updateGpuMode();\n              showNotification('✅ GPU detected! Set to GPU mode.');\n              gpuDetected = true;\n            }\n          } catch (e) {\n            // GPU detection failed, continue with CPU\n          }\n        }\n        \n        if (!gpuDetected) {\n          showNotification('⚠️ GPU detection unavailable. Using CPU-only.');\n        }\n\n        // Update URL params after auto-detect\n        updateUrlParams();\n        updateGpuMode();\n\n      } catch (err) {\n        showNotification('❌ Auto-detect failed: ' + err.message);\n      } finally {\n        btn.textContent = originalText;\n        btn.disabled = false;\n      }\n    };\n\n    // Notification helper\n    function showNotification(message) {\n      // Create a temporary notification div\n      const notification = document.createElement('div');\n      notification.textContent = message;\n      notification.style.cssText = `\n        position: fixed;\n        top: 20px;\n        right: 20px;\n        background: white;\n        padding: 16px 24px;\n        border-radius: 8px;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);\n        font-size: 0.95em;\n        max-width: 300px;\n        z-index: 9999;\n        animation: slideIn 0.3s ease-out;\n      `;\n      document.body.appendChild(notification);\n      \n      // Auto-remove after 4 seconds\n      setTimeout(() => {\n        notification.style.animation = 'slideOut 0.3s ease-out forwards';\n        setTimeout(() => notification.remove(), 300);\n      }, 4000);\n    }\n\n    // Add slide animations\n    const style = document.createElement('style');\n    style.textContent = `\n      @keyframes slideIn {\n        from { transform: translateX(400px); opacity: 0; }\n        to { transform: translateX(0); opacity: 1; }\n      }\n      @keyframes slideOut {\n        from { transform: translateX(0); opacity: 1; }\n        to { transform: translateX(400px); opacity: 0; }\n      }\n    `;\n    document.head.appendChild(style);\n\n    // Score models
+    // Score models
     window.scoreModels = async function() {
       const resultsContainer = document.getElementById('resultsContainer');
       const resultsPanel = document.getElementById('resultsPanel');
