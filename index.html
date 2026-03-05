@@ -641,7 +641,10 @@
       try {
         // Detect system RAM using Device Memory API
         if (navigator.deviceMemory) {
-          const ramGb = navigator.deviceMemory;
+          const detectedRam = navigator.deviceMemory;
+          // Device Memory API is approximate, so bump up if it seems low
+          const ramGb = detectedRam < 12 ? detectedRam * 2 : detectedRam;
+          
           // Find the closest RAM option
           const ramOptions = [8, 16, 24, 32, 64, 128];
           let bestMatch = 32; // default
@@ -656,9 +659,9 @@
           });
           
           document.getElementById('systemRam').value = bestMatch;
-          showNotification(`✅ Detected ${ramGb}GB RAM → selected ${bestMatch}GB option`);
+          showNotification(`✅ Detected ~${Math.round(ramGb)}GB RAM → selected ${bestMatch}GB option`);
         } else {
-          showNotification('⚠️ Device Memory API not supported. Using default.');
+          showNotification('⚠️ Device Memory API not supported. Please select manually.');
         }
 
         // Detect GPU using WebGPU (if available)
@@ -695,13 +698,15 @@
     };
 
     // Notification helper
+    let notificationCount = 0;
     function showNotification(message) {
       // Create a temporary notification div
       const notification = document.createElement('div');
       notification.textContent = message;
+      const topOffset = 20 + (notificationCount * 90); // Stack vertically (each ~90px tall)
       notification.style.cssText = `
         position: fixed;
-        top: 20px;
+        top: ${topOffset}px;
         right: 20px;
         background: white;
         padding: 16px 24px;
@@ -709,15 +714,19 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         font-size: 0.95em;
         max-width: 300px;
-        z-index: 9999;
+        z-index: ${9999 + notificationCount};
         animation: slideIn 0.3s ease-out;
       `;
+      notificationCount++;
       document.body.appendChild(notification);
       
       // Auto-remove after 4 seconds
       setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-out forwards';
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => {
+          notification.remove();
+          notificationCount--;
+        }, 300);
       }, 4000);
     }
 
