@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import https from 'https';
+import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -35,14 +35,8 @@ function getLocalIp() {
   return 'localhost';
 }
 
-// Load SSL certificates
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, 'key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
-};
-
-// Create HTTPS server
-const server = https.createServer(sslOptions, (req, res) => {
+// Create HTTP server
+const server = http.createServer((req, res) => {
   // Strip query string from URL
   const urlPath = req.url.split('?')[0];
   let filePath = path.join(__dirname, urlPath === '/' ? 'index.html' : urlPath);
@@ -103,10 +97,9 @@ const LOCAL_IP = getLocalIp();
 
 // Start server
 server.listen(PORT, HOST, () => {
-  console.log('\n🤖 llmfit-web server started (HTTPS)\n');
-  console.log(`📍 Local:     https://localhost:${PORT}`);
-  console.log(`🌐 Network:   https://${LOCAL_IP}:${PORT}`);
-  console.log('\n⚠️  Note: Self-signed certificate. Browser will warn you — ignore the warning.\n');
+  console.log('\n🤖 llmfit-web server started (HTTP)\n');
+  console.log(`📍 Local:     http://localhost:${PORT}`);
+  console.log(`🌐 Network:   http://${LOCAL_IP}:${PORT}\n`);
 });
 
 // Handle shutdown gracefully

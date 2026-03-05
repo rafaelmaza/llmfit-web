@@ -6,8 +6,10 @@
   "main": "src/scoring.js",
   "scripts": {
     "test": "node --test test/**/*.test.js",
-    "test:unit": "node --test test/scoring.test.js",
+    "test:unit": "node --test test/scoring.test.js test/speed-bounds.test.js",
     "test:integration": "node test/integration.test.js",
+    "test:ui": "playwright test test/ui.test.js",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:ui",
     "dev": "python3 -m http.server 8000 --directory .",
     "server": "node server.js",
     "start": "node server.js",

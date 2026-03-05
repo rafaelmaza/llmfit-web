@@ -14,3 +14,8 @@ yarn-error.log*
 # Playwright / recording artifacts
 artifacts/
 
+# SSL certificates (should be generated locally, never committed)
+*.pem
+cert.pem
+key.pem
+

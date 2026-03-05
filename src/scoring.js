@@ -227,12 +227,12 @@ export function estimateTps(model, quant, hardware, runMode, isMLX = false) {
       break;
   }
 
-  // CPU-only should use CPU K regardless
+  // CPU-only should use realistic CPU K
   if (runMode === RunMode.CPU_ONLY) {
-    const cpuK = 70; // x86, adjust for ARM if needed
+    const cpuK = 25; // Realistic for llama.cpp on x86: ~5-20 tok/s for small models
     base = (cpuK / params) * getQuantSpeedMultiplier(quant);
     if (hardware.cpuCores >= 8) {
-      base *= 1.1;
+      base *= 1.2; // More aggressive bonus for many cores
     }
   }
 
@@ -269,10 +269,11 @@ export function analyzeModel(model, hardware, useCase) {
 
   // Step 1: Determine execution path
   let runMode, memRequired, memAvailable;
+  let vram = 0;  // Track VRAM for display in return
   const notes = [];
 
   if (hardware.hasGpu) {
-    const vram = hardware.vram || 0;
+    vram = hardware.vram || 0;
 
     if (hardware.unified) {
       // Apple Silicon: shared pool
@@ -373,6 +374,8 @@ export function analyzeModel(model, hardware, useCase) {
     runMode,
     memoryRequiredGb: memRequired,
     memoryAvailableGb: memAvailable,
+    vramGb: vram,
+    systemRamGb: hardware.systemRam,
     utilizationPct: utilization,
     estimatedTps: tps,
     diskSizeGiB,
