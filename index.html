@@ -933,11 +933,16 @@
             : `${Math.round(r.paramsBillions)}B`;
 
           const modelDisplayName = r.model.split('/').pop();
+          const hfUrl = `https://huggingface.co/${r.model}`;
 
           html += `
             <div class="model-card">
               <div class="model-header">
-                <div class="model-name" title="${r.model}">${modelDisplayName}</div>
+                <div class="model-name" title="${r.model}">
+                  <a href="${hfUrl}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+                    ${modelDisplayName} 🤗
+                  </a>
+                </div>
                 <div class="model-score">${r.compositeScore}</div>
               </div>
               <div class="model-meta">
