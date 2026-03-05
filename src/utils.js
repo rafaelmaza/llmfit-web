@@ -218,8 +218,8 @@ export const BACKEND_SPEED_CONSTANT = {
   "ROCM": 180.0,
   "VULKAN": 150.0,
   "SYCL": 100.0,
-  "CPU_ARM": 90.0,
-  "CPU_X86": 70.0,
+  "CPU_ARM": 20.0,      // ARM: ~5-15 tok/s for small models
+  "CPU_X86": 25.0,      // x86: ~5-20 tok/s for small models (matches warning)
 };
 
 /**
@@ -232,7 +232,7 @@ export function getBackendSpeedConstant(backend, isMLX = false) {
   if (backend === "METAL" && isMLX) {
     return BACKEND_SPEED_CONSTANT["METAL_MLX"];
   }
-  return BACKEND_SPEED_CONSTANT[backend] || 70.0;
+  return BACKEND_SPEED_CONSTANT[backend] || 25.0;  // Safe default (CPU-like)
 }
 
 /**

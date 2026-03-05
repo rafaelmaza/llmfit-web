@@ -502,9 +502,9 @@
 
   <script type="module">
     // Cache-busting query strings help GitHub Pages clients pick up updates promptly.
-    import { scoreModels as scoreModelsCore, filterByRunMode, filterByRequirements, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260305-0400';
-    import { getAllModels } from './src/models.js?v=20260305-0400';
-    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260305-0400';
+    import { scoreModels as scoreModelsCore, filterByRunMode, filterByRequirements, UseCase, FitLevel, RunMode } from './src/scoring.js?v=20260305-0500';
+    import { getAllModels } from './src/models.js?v=20260305-0500';
+    import { getGpuSpecs, getAvailableGpus } from './src/gpus.js?v=20260305-0500';
 
     // Format RunMode enum for display
     function formatRunMode(runMode) {
@@ -515,6 +515,21 @@
         'CPU_ONLY': 'CPU Only'
       };
       return labels[runMode] || runMode;
+    }
+
+    // Format memory display based on run mode
+    function formatMemoryDisplay(result) {
+      const { runMode, memoryAvailableGb, vramGb, systemRamGb, utilizationPct } = result;
+      
+      // Hybrid modes: show both GPU and system RAM
+      if (runMode === 'MOE_OFFLOAD' || runMode === 'CPU_OFFLOAD') {
+        if (vramGb > 0 && systemRamGb > 0) {
+          return `${utilizationPct.toFixed(0)}% of ${vramGb.toFixed(1)}GB GPU + ${systemRamGb.toFixed(1)}GB RAM`;
+        }
+      }
+      
+      // Pure GPU or pure CPU
+      return `${utilizationPct.toFixed(0)}% of ${memoryAvailableGb.toFixed(1)}GB`;
     }
 
     // Format disk size for display (avoid confusing 0.0 for small models)
@@ -822,7 +837,7 @@
                 </div>
                 <div class="detail-item">
                   <div class="detail-label">Memory</div>
-                  <div class="detail-value">${r.utilizationPct.toFixed(0)}% of ${r.memoryAvailableGb.toFixed(1)}GB</div>
+                  <div class="detail-value">${formatMemoryDisplay(r)}</div>
                 </div>
                 <div class="detail-item">
                   <div class="detail-label" title="Context window (max tokens)">Context</div>
