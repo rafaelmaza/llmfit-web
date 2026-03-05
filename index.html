@@ -427,6 +427,8 @@
             <option value="64">64 GB</option>
             <option value="128">128 GB</option>
           </select>
+          <button type="button" id="autoDetectBtn" onclick="autoDetectHardware();" style="padding: 12px 16px; width: auto; white-space: nowrap; font-size: 0.9em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); margin-top: 8px;">🔍 Auto-detect</button>
+          <small style="color: #999; margin-top: 5px; display: block;">Auto-detect reads your device's actual specs</small>
         </div>
 
         <div class="form-group">
@@ -628,6 +630,110 @@
       document.getElementById('runModeHelpText').style.display = showGpuFilters ? 'block' : 'none';
       document.getElementById('cpuOnlyFilterMessage').style.display = showGpuFilters ? 'none' : 'block';
     }
+
+    // Auto-detect hardware
+    window.autoDetectHardware = async function() {
+      const btn = document.getElementById('autoDetectBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ Detecting...';
+      btn.disabled = true;
+
+      try {
+        // Detect system RAM using Device Memory API
+        if (navigator.deviceMemory) {
+          const ramGb = navigator.deviceMemory;
+          // Find the closest RAM option
+          const ramOptions = [8, 16, 24, 32, 64, 128];
+          let bestMatch = 32; // default
+          let minDiff = Math.abs(32 - ramGb);
+          
+          ramOptions.forEach(opt => {
+            const diff = Math.abs(opt - ramGb);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestMatch = opt;
+            }
+          });
+          
+          document.getElementById('systemRam').value = bestMatch;
+          showNotification(`✅ Detected ${ramGb}GB RAM → selected ${bestMatch}GB option`);
+        } else {
+          showNotification('⚠️ Device Memory API not supported. Using default.');
+        }
+
+        // Detect GPU using WebGPU (if available)
+        let gpuDetected = false;
+        if (navigator.gpu) {
+          try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if (adapter) {
+              // Set to CPU+GPU mode since we detected a GPU
+              document.querySelector('input[name="gpuMode"][value="yes"]').checked = true;
+              updateGpuMode();
+              showNotification('✅ GPU detected! Set to GPU mode.');
+              gpuDetected = true;
+            }
+          } catch (e) {
+            // GPU detection failed, continue with CPU
+          }
+        }
+        
+        if (!gpuDetected) {
+          showNotification('⚠️ GPU detection unavailable. Using CPU-only.');
+        }
+
+        // Update URL params after auto-detect
+        updateUrlParams();
+        updateGpuMode();
+
+      } catch (err) {
+        showNotification('❌ Auto-detect failed: ' + err.message);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    };
+
+    // Notification helper
+    function showNotification(message) {
+      // Create a temporary notification div
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        font-size: 0.95em;
+        max-width: 300px;
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+      `;
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out forwards';
+        setTimeout(() => notification.remove(), 300);
+      }, 4000);
+    }
+
+    // Add slide animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
 
     // Score models
     window.scoreModels = async function() {
